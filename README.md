@@ -11,9 +11,7 @@ Penny Pincher is currently in active development. The core features—such as tr
 Planned improvements and future features include:
 
 - Adding support for recurring transactions
-- Integrating with bank APIs for automatic transaction import
 - Enhanced data visualization and analytics
-- Mobile app version (iOS and Android)
 - Multi-currency support
 - Improved security and data encryption
 - Customizable categories and tags
@@ -22,18 +20,20 @@ Your feedback and contributions are welcome to help shape the future of Penny Pi
 
 ## Features
 
-- Track income and expenses with ease
-- Categorize transactions for better organization
-- Generate detailed monthly and yearly financial reports
-- Set, monitor, and adjust budgets to stay on track
-- Export your data to CSV for further analysis or backup
-- User-friendly interface for a seamless experience
+- **Track Transactions**: Add, edit, delete, and view income and expense transactions.
+- **Categorize Transactions**: Organize transactions into categories for better financial insights.
+- **Budget Management**: Set and monitor budgets for different categories.
+- **Reports**: Generate detailed financial reports, including income vs. expenses and category breakdowns.
+- **Multi-Currency Support**: Track transactions in different currencies with automatic conversion.
+- **Export Data**: Export your financial data to CSV for further analysis or backup.
+- **User Authentication**: Securely register, log in, and manage your account.
+- **Responsive Design**: Optimized for desktop and mobile devices.
 
 ## Getting Started
 
 1. **Clone the repository:**
     ```bash
-    git clone https://github.com/yourusername/penny-pincher.git
+    git clone https://github.com/sdkdev15/penny-pincher.git
     cd penny-pincher
     ```
 
@@ -42,30 +42,118 @@ Your feedback and contributions are welcome to help shape the future of Penny Pi
     npm install
     ```
 
-3. **Run the application:**
+3. **Set up the database:**
+    - Ensure you have PostgreSQL installed and running.
+    - Update the `.env` file with your database connection string:
+      ```
+      DATABASE_URL=postgresql://<username>:<password>@<host>:<port>/<database>
+      JWT_SECRET=your_jwt_secret
+      JWT_EXPIRES_IN=1d
+      ```
+    - Run Prisma migrations:
+      ```bash
+      npx prisma migrate dev
+      ```
+
+4. **Run the application:**
     ```bash
-    npm start
+    npm run dev
     ```
 
 ## Project Structure
 
 ```
 penny-pincher/
+├── prisma/                # Prisma schema and migrations
+│   ├── schema.prisma
+│   └── migrations/
 ├── src/
-│   ├── components/      # React components
-│   ├── utils/           # Utility functions
-│   ├── App.js           # Main app entry
-│   └── index.js         # React DOM entry
-├── public/
-│   └── index.html
+│   ├── api/               # API routes for authentication, transactions, and categories
+│   │   ├── auth/
+│   │   ├── transactions/
+│   │   └── categories/
+│   ├── components/        # React components
+│   │   ├── categories/    # Category management components
+│   │   ├── transactions/  # Transaction management components
+│   │   └── reports/       # Financial reports components
+│   ├── hooks/             # Custom React hooks
+│   ├── lib/               # Utility libraries (e.g., constants, Prisma client)
+│   ├── pages/             # Next.js pages
+│   │   ├── api/           # API routes
+│   │   ├── index.tsx      # Home page
+│   │   └── login.tsx      # Login page
+│   ├── styles/            # Global and component-specific styles
+│   └── utils/             # Utility functions
+├── public/                # Static assets
+│   └── images/
+├── .env                   # Environment variables
 ├── package.json
-└── README.md
+├── README.md
+└── tsconfig.json          # TypeScript configuration
 ```
+
+## API Endpoints
+
+### Authentication
+- `POST /api/auth/register`: Register a new user.
+- `POST /api/auth/login`: Log in a user and return a JWT.
+- `POST /api/auth/logout`: Log out a user (client-side token removal).
+- `DELETE /api/auth/delete`: Delete the authenticated user's account.
+- `PUT /api/auth/update`: Update the authenticated user's password.
+- `GET /api/auth/user`: Get the authenticated user's details.
+- `GET /api/auth/users`: Get a list of all users (admin-only).
+
+### Transactions
+- `GET /api/transactions`: List all transactions.
+- `POST /api/transactions`: Create a new transaction.
+- `GET /api/transactions/:id`: Get a single transaction by ID.
+- `PUT /api/transactions/:id`: Update a transaction by ID.
+- `DELETE /api/transactions/:id`: Delete a transaction by ID.
+
+### Categories
+- `GET /api/categories`: List all categories.
+- `POST /api/categories`: Create a new category.
+- `GET /api/categories/:id`: Get a single category by ID.
+- `PUT /api/categories/:id`: Update a category by ID.
+- `DELETE /api/categories/:id`: Delete a category by ID.
 
 ## Contributing
 
-Contributions are welcome! Please open issues or submit pull requests for improvements.
+Contributions are welcome! Please follow these steps to contribute:
+
+1. Fork the repository.
+2. Create a new branch for your feature or bug fix:
+   ```bash
+   git checkout -b feature-name
+   ```
+3. Commit your changes  
+   ```bash
+   git commit -m "Add feature-name"
+   ```
+4. Push to your branch
+   ```bash
+   git push origin feature-name
+   ```
+5. Open Pull request
 
 ## License
 
 This project is licensed under the MIT License.
+
+---
+
+### Key Updates:
+1. **Features Section**: Added details about the app's features based on the scanned files.
+2. **Getting Started**: Included database setup instructions and Prisma migration steps.
+3. **Project Structure**: Updated to reflect the current folder structure, including `api`, `components`, and `hooks`.
+4. **API Endpoints**: Documented all available API routes for authentication, transactions, and categories.
+
+Let me know if you need further adjustments!---
+
+### Key Updates:
+1. **Features Section**: Added details about the app's features based on the scanned files.
+2. **Getting Started**: Included database setup instructions and Prisma migration steps.
+3. **Project Structure**: Updated to reflect the current folder structure, including `api`, `components`, and `hooks`.
+4. **API Endpoints**: Documented all available API routes for authentication, transactions, and categories.
+
+Let me know if you need further adjustments!
