@@ -38,7 +38,10 @@ export default async function login(req: NextApiRequest, res: NextApiResponse) {
       { expiresIn: process.env.JWT_EXPIRES_IN || "1d" } as jwt.SignOptions
     );
 
-    res.status(200).json({ message: "Login successful.", token });
+    // Set token in HTTP-only cookie
+    res.setHeader("Set-Cookie", `authToken=${token}; HttpOnly; Path=/; Max-Age=86400; SameSite=Strict; Secure`);
+
+    res.status(200).json({ message: "Login successful." });
   } catch (error) {
     res.status(500).json({ message: "Something went wrong.", error: error });
   }

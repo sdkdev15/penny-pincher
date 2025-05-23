@@ -1,82 +1,142 @@
-
 "use client";
 
-import { useCallback, useEffect, useMemo } from "react";
-import { v4 as uuidv4 } from "uuid"; // For generating unique IDs
+import { useCallback, useEffect, useState } from "react";
 import type { Category } from "@/lib/types";
-import { DEFAULT_CATEGORIES } from "@/lib/constants";
-import { useLocalStorage } from "./useLocalStorage";
-
-const CATEGORIES_STORAGE_KEY = "pennyPincherCategories";
 
 export function useCategories() {
-  const initialCategoriesValue = useMemo<Category[]>(() => [], []);
-  const [categories, setCategories] = useLocalStorage<Category[]>(CATEGORIES_STORAGE_KEY, initialCategoriesValue);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
 
+  // Fetch all categories from the API
+  const fetchCategories = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      const response = await fetch("/api/process/categories", {
+        credentials: "include", // Include cookies in the request
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to fetch categories.");
+      }
+
+      const data: Category[] = await response.json();
+      setCategories(data);
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  // Add a new category via the API
+  const addCategory = useCallback(
+    async (name: string, budget?: number) => {
+      if (name.trim() === "") {
+        throw new Error("Category name cannot be empty.");
+      }
+
+      try {
+        const response = await fetch("/api/process/categories", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          credentials: "include", // Include cookies in the request
+          body: JSON.stringify({ name, budget }),
+        });
+
+        if (!response.ok) {
+          throw new Error("Failed to add category.");
+        }
+
+        const newCategory: Category = await response.json();
+        setCategories((prev) => [...prev, newCategory]);
+      } catch (error) {
+        console.error(error);
+      }
+    },
+    []
+  );
+
+  // Update an existing category via the API
+  const updateCategory = useCallback(
+    async (id: string, name: string, budget?: number) => {
+      if (name.trim() === "") {
+        throw new Error("Category name cannot be empty.");
+      }
+
+      try {
+        const response = await fetch(`/api/process/categories/${id}`, {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          credentials: "include", // Include cookies in the request
+          body: JSON.stringify({ name, budget }),
+        });
+
+        if (!response.ok) {
+          throw new Error("Failed to update category.");
+        }
+
+        const updatedCategory: Category = await response.json();
+        setCategories((prev) =>
+          prev.map((cat) => (cat.id === id ? updatedCategory : cat))
+        );
+      } catch (error) {
+        console.error(error);
+      }
+    },
+    []
+  );
+
+  // Delete a category via the API
+  const deleteCategory = useCallback(
+    async (id: string) => {
+      try {
+        const response = await fetch(`/api/process/categories/${id}`, {
+          method: "DELETE",
+          credentials: "include", // Include cookies in the request
+        });
+
+        if (!response.ok) {
+          throw new Error("Failed to delete category.");
+        }
+
+        setCategories((prev) => prev.filter((cat) => cat.id !== id));
+      } catch (error) {
+        console.error(error);
+      }
+    },
+    []
+  );
+
+  // Get a category name by ID
+  const getCategoryNameById = useCallback(
+    (id: string) => {
+      return categories.find((cat) => cat.id === id)?.name || "Uncategorized";
+    },
+    [categories]
+  );
+
+  // Generate category options for dropdowns
+  const categoryOptions = categories.map((cat) => ({
+    value: cat.id.toString(),
+    label: cat.name,
+  }));
+
+  // Fetch categories on component mount
   useEffect(() => {
-    // Only set default categories if the stored categories are actually empty
-    // This check might be redundant if useLocalStorage correctly returns initialValue only once.
-    const storedCategories = window.localStorage.getItem(CATEGORIES_STORAGE_KEY);
-    if (!storedCategories || JSON.parse(storedCategories).length === 0) {
-      const initialDefaultCategories = DEFAULT_CATEGORIES.map(cat => ({ ...cat, id: uuidv4(), budget: cat.budget || undefined }));
-      setCategories(initialDefaultCategories);
-    }
-  }, [setCategories]); // Ensure setCategories is stable, or this effect might run too often if not.
+    fetchCategories();
+  }, [fetchCategories]);
 
-  const addCategory = useCallback((name: string, budget?: number) => {
-    if (name.trim() === "") {
-      throw new Error("Category name cannot be empty.");
-    }
-    setCategories(prev => {
-      if (prev.some(cat => cat.name.toLowerCase() === name.trim().toLowerCase())) {
-        throw new Error("Category with this name already exists.");
-      }
-      const newCategory: Category = { 
-          id: uuidv4(), 
-          name: name.trim(), 
-          budget: budget && budget > 0 ? budget : undefined 
-      };
-      return [...prev, newCategory];
-    });
-  }, [setCategories]);
-
-  const updateCategory = useCallback((id: string, name: string, budget?: number) => {
-    if (name.trim() === "") {
-      throw new Error("Category name cannot be empty.");
-    }
-    setCategories(prev => {
-      if (prev.some(cat => cat.id !== id && cat.name.toLowerCase() === name.trim().toLowerCase())) {
-        throw new Error("Another category with this name already exists.");
-      }
-      return prev.map(cat => 
-        cat.id === id ? { ...cat, name: name.trim(), budget: budget && budget > 0 ? budget : undefined } : cat
-      );
-    });
-  }, [setCategories]);
-
-  const deleteCategory = useCallback((id: string, associatedTransactionExists: (categoryId: string) => boolean) => {
-    setCategories(prev => {
-      const categoryToDelete = prev.find(cat => cat.id === id);
-      if (categoryToDelete?.isDefault) {
-        throw new Error("Default categories cannot be deleted.");
-      }
-      if (associatedTransactionExists(id)) {
-        throw new Error("Cannot delete category with associated transactions. Please reassign them first.");
-      }
-      return prev.filter(cat => cat.id !== id);
-    });
-  }, [setCategories]);
-
-  const getCategoryNameById = useCallback((id: string) => {
-    // categories might not be initialized on first render if fetched async or from localStorage
-    return categories?.find(cat => cat.id === id)?.name || "Uncategorized";
-  }, [categories]);
-  
-  const categoryOptions = useMemo(() => 
-    categories.map(cat => ({ value: cat.id, label: cat.name }))
-  , [categories]);
-
-
-  return { categories, addCategory, updateCategory, deleteCategory, getCategoryNameById, categoryOptions };
+  return {
+    categories,
+    isLoading,
+    addCategory,
+    updateCategory,
+    deleteCategory,
+    getCategoryNameById,
+    categoryOptions,
+  };
 }
-

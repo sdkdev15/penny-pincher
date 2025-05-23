@@ -3,20 +3,27 @@ import jwt from "jsonwebtoken";
 
 export function authMiddleware(handler: NextApiHandler) {
   return async (req: NextApiRequest, res: NextApiResponse) => {
-    const authHeader = req.headers.authorization;
+    // Extract the token from cookies
+    const token = req.cookies.authToken;
 
-    if (!authHeader || !authHeader.startsWith("Bearer ")) {
-      return res.status(401).json({ message: "Unauthorized" });
+    if (!token) {
+      return res.status(401).json({ message: "Unauthorized: No token provided." });
     }
 
-    const token = authHeader.split(" ")[1];
-
     try {
-      const decoded = jwt.verify(token, process.env.JWT_SECRET!);
-      (req as any).user = decoded; // Attach user info to the request object
+      const jwtSecret = process.env.JWT_SECRET;
+      if (!jwtSecret) {
+        return res.status(500).json({ message: "JWT secret is not configured." });
+      }
+
+      // Verify the token
+      const decoded = jwt.verify(token, jwtSecret) as { userId: number };
+      (req as any).user = decoded; 
+
+      // Proceed to the next handler
       return handler(req, res);
     } catch (error) {
-      return res.status(401).json({ message: "Invalid token" });
+      return res.status(401).json({ message: "Unauthorized: Invalid token." });
     }
   };
 }

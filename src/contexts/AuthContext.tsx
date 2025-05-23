@@ -1,10 +1,8 @@
-
 "use client";
 
-import type { ReactNode } from 'react';
-import { createContext, useState, useEffect, useCallback, useMemo } from 'react';
-import { useRouter } from 'next/navigation';
-import { useLocalStorage } from '@/hooks/useLocalStorage';
+import type { ReactNode } from "react";
+import { createContext, useState, useEffect, useCallback } from "react";
+import { useRouter } from "next/navigation";
 
 interface AuthContextType {
   isAuthenticated: boolean;
@@ -16,49 +14,96 @@ interface AuthContextType {
 
 export const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-const AUTH_STORAGE_KEY = 'pennyPincherAuth';
-
-interface StoredAuthState {
-  isAuthenticated: boolean;
-  user: { username: string } | null;
-}
-
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const initialAuthState = useMemo<StoredAuthState>(() => ({
-    isAuthenticated: false,
-    user: null,
-  }), []);
-
-  const [storedAuthState, setStoredAuthState] = useLocalStorage<StoredAuthState>(
-    AUTH_STORAGE_KEY,
-    initialAuthState
-  );
+  const [user, setUser] = useState<{ username: string } | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const router = useRouter();
 
-  // Derived state from localStorage for easier usage
-  const isAuthenticated = storedAuthState.isAuthenticated;
-  const user = storedAuthState.user;
+  const isAuthenticated = !!user;
 
   useEffect(() => {
-    setIsLoading(false); // Initial load from localStorage is synchronous in useLocalStorage hook
-  }, []);
-  
-  const login = useCallback(async (usernameInput: string, passwordInput: string): Promise<boolean> => {
-    // Hardcoded credentials for demo purposes
-    if (usernameInput === 'penny' && passwordInput === 'admin') {
-      setStoredAuthState({ isAuthenticated: true, user: { username: usernameInput } });
-      router.push('/');
-      return true;
-    }
-    alert('Invalid credentials');
-    return false;
-  }, [setStoredAuthState, router]);
+    // Check if the user is authenticated on initial load
+    const fetchUser = async () => {
+      try {
+        const response = await fetch("/api/auth/user", {
+          method: "GET",
+          credentials: "include", // Include cookies in the request
+        });
 
-  const logout = useCallback(() => {
-    setStoredAuthState({ isAuthenticated: false, user: null });
-    router.push('/login');
-  }, [setStoredAuthState, router]);
+        if (response.ok) {
+          const data = await response.json();
+          setUser(data);
+        } else {
+          setUser(null);
+        }
+      } catch (error) {
+        console.error("Failed to fetch user:", error);
+        setUser(null);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchUser();
+  }, []);
+
+  const login = useCallback(
+    async (usernameInput: string, passwordInput: string): Promise<boolean> => {
+      try {
+        const response = await fetch("/api/auth/login", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ username: usernameInput, password: passwordInput }),
+          credentials: "include", // Include cookies in the request
+        });
+
+        if (!response.ok) {
+          alert("Invalid credentials");
+          return false;
+        }
+
+        // Fetch the user information after successful login
+        const userResponse = await fetch("/api/auth/user", {
+          method: "GET",
+          credentials: "include",
+        });
+
+        if (userResponse.ok) {
+          const data = await userResponse.json();
+          setUser(data);
+          router.push("/");
+          return true;
+        } else {
+          alert("Failed to fetch user information after login.");
+          return false;
+        }
+      } catch (error) {
+        console.error("Login failed:", error);
+        alert("An error occurred during login.");
+        return false;
+      }
+    },
+    [router]
+  );
+
+  const logout = useCallback(async () => {
+    try {
+      const response = await fetch("/api/auth/logout", {
+        method: "POST",
+        credentials: "include", // Include cookies in the request
+      });
+
+      if (response.ok) {
+        setUser(null);
+        router.push("/login");
+      } else {
+        alert("Failed to log out.");
+      }
+    } catch (error) {
+      console.error("Logout failed:", error);
+      alert("An error occurred during logout.");
+    }
+  }, [router]);
 
   return (
     <AuthContext.Provider value={{ isAuthenticated, user, isLoading, login, logout }}>

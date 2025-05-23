@@ -5,6 +5,11 @@ export default function logout(req: NextApiRequest, res: NextApiResponse) {
     return res.status(405).json({ message: "Method not allowed" });
   }
 
-  // Invalidate the token on the client side (e.g., remove it from cookies or localStorage)
+  // Clear the authToken cookie
+  res.setHeader(
+    "Set-Cookie",
+    "authToken=; HttpOnly; Path=/; Max-Age=0; SameSite=Strict; Secure"
+  );
+
   res.status(200).json({ message: "Logout successful." });
 }

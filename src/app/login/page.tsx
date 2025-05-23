@@ -1,26 +1,36 @@
-
 "use client";
 
-import { useState, type FormEvent } from 'react';
-import { useAuth } from '@/hooks/useAuth';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Coins } from 'lucide-react';
-import { APP_NAME } from '@/lib/constants';
+import { useState, type FormEvent } from "react";
+import { useAuth } from "@/hooks/useAuth";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Coins } from "lucide-react";
+import { APP_NAME } from "@/lib/constants";
 
 export default function LoginPage() {
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
   const { login } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const handleSubmit = async (event: FormEvent) => {
     event.preventDefault();
     setIsLoading(true);
-    await login(username, password);
-    setIsLoading(false);
+    setError(null); // Clear previous errors
+
+    try {
+      const success = await login(username, password);
+      if (!success) {
+        setError("Invalid username or password. Please try again.");
+      }
+    } catch (err) {
+      setError("An unexpected error occurred. Please try again later.");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -57,8 +67,13 @@ export default function LoginPage() {
                 className="bg-input"
               />
             </div>
+            {error && (
+              <p className="text-center text-sm text-red-500">
+                {error}
+              </p>
+            )}
             <Button type="submit" className="w-full" disabled={isLoading}>
-              {isLoading ? 'Signing In...' : 'Sign In'}
+              {isLoading ? "Signing In..." : "Sign In"}
             </Button>
             <p className="text-center text-sm text-muted-foreground">
               Starter: use <strong>penny</strong> / <strong>admin</strong>

@@ -92,26 +92,35 @@ export function CategoryManager() {
     setIsFormOpen(true);
   };
 
-  const handleDelete = (category: Category) => {
-    try {
-      if (category.isDefault) {
-         toast({ title: "Action Denied", description: "Default categories cannot be deleted.", variant: "destructive" });
-         return;
-      }
-      if (hasTransactionsForCategory(category.id)) {
-        toast({ title: "Action Denied", description: "Cannot delete category with associated transactions. Please reassign them first or delete those transactions.", variant: "destructive" });
-        return;
-      }
-      deleteCategory(category.id, hasTransactionsForCategory);
-      toast({ title: "Success", description: `Category "${category.name}" deleted.` });
-    } catch (error) {
-       toast({
-        title: "Error",
-        description: error instanceof Error ? error.message : "Could not delete category.",
+const handleDelete = (category: Category) => {
+  try {
+    if (category.isDefault) {
+      toast({
+        title: "Action Denied",
+        description: "Default categories cannot be deleted.",
         variant: "destructive",
       });
+      return;
     }
-  };
+    if (hasTransactionsForCategory(category.id)) {
+      toast({
+        title: "Action Denied",
+        description:
+          "Cannot delete category with associated transactions. Please reassign them first or delete those transactions.",
+        variant: "destructive",
+      });
+      return;
+    }
+    deleteCategory(category.id); // Pass only the category ID
+    toast({ title: "Success", description: `Category "${category.name}" deleted.` });
+  } catch (error) {
+    toast({
+      title: "Error",
+      description: error instanceof Error ? error.message : "Could not delete category.",
+      variant: "destructive",
+    });
+  }
+};
 
   const openNewCategoryForm = () => {
     form.reset({ name: "", budget: "" });

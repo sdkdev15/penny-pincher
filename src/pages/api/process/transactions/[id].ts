@@ -1,8 +1,10 @@
 import { NextApiRequest, NextApiResponse } from "next";
 import { prisma } from "@/lib/prisma";
+import { authMiddleware } from "@/middleware/authMiddleware";
 
-export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+async function handler(req: NextApiRequest, res: NextApiResponse) {
   const { id } = req.query;
+  const userId = (req as any).user.userId; // Extracted from authMiddleware
 
   if (!id || Array.isArray(id)) {
     return res.status(400).json({ message: "Invalid transaction ID." });
@@ -12,7 +14,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     // Get a single transaction
     try {
       const transaction = await prisma.transaction.findUnique({
-        where: { id: parseInt(id) },
+        where: { id: parseInt(id), userId },
         include: { category: true },
       });
 
@@ -22,7 +24,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
       res.status(200).json(transaction);
     } catch (error) {
-      res.status(500).json({ message: "Failed to fetch transaction.", error: error.message });
+      res.status(500).json({ message: "Failed to fetch transaction.", error: error });
     }
   } else if (req.method === "PUT") {
     // Update a transaction
@@ -30,7 +32,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     try {
       const updatedTransaction = await prisma.transaction.update({
-        where: { id: parseInt(id) },
+        where: { id: parseInt(id), userId },
         data: {
           type,
           amount: parseFloat(amount),
@@ -42,20 +44,22 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
       res.status(200).json(updatedTransaction);
     } catch (error) {
-      res.status(500).json({ message: "Failed to update transaction.", error: error.message });
+      res.status(500).json({ message: "Failed to update transaction.", error: error });
     }
   } else if (req.method === "DELETE") {
     // Delete a transaction
     try {
       await prisma.transaction.delete({
-        where: { id: parseInt(id) },
+        where: { id: parseInt(id), userId },
       });
 
       res.status(200).json({ message: "Transaction deleted successfully." });
     } catch (error) {
-      res.status(500).json({ message: "Failed to delete transaction.", error: error.message });
+      res.status(500).json({ message: "Failed to delete transaction.", error: error });
     }
   } else {
     res.status(405).json({ message: "Method not allowed." });
   }
 }
+
+export default authMiddleware(handler);

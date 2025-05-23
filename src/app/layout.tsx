@@ -8,7 +8,7 @@ import { Toaster } from '@/components/ui/toaster';
 import { APP_NAME } from '@/lib/constants';
 import { AuthProvider } from '@/contexts/AuthContext';
 import { ThemeProvider } from '@/contexts/ThemeContext';
-import { CurrencyProvider } from '@/contexts/CurrencyContext'; // Added import
+import { CurrencyProvider } from '@/contexts/CurrencyContext'; 
 
 const geistSans = Geist({
   variable: '--font-geist-sans',

@@ -16,6 +16,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { DateRange } from "react-day-picker";
 import { cn, formatCurrency } from "@/lib/utils"; 
 import Image from "next/image";
+import { Spinner } from "@/components/ui/spinner"; 
 import { useCurrency } from "@/hooks/useCurrency"; 
 
 const CHART_COLORS = [
@@ -33,7 +34,7 @@ const CHART_COLORS = [
 
 
 export function ReportsClient() {
-  const { transactions } = useTransactions(); // transactions amounts are in base currency (USD)
+  const { transactions, isLoading } = useTransactions(); // transactions amounts are in base currency (USD)
   const { getCategoryNameById, categories } = useCategories();
   const { currency: displayCurrencyCode, convertAmount } = useCurrency(); 
   
@@ -126,7 +127,14 @@ export function ReportsClient() {
 
   // This formatter now receives a value that is already in the display currency
   const currencyTickFormatter = (valueInDisplayCurrency: number) => formatCurrency(valueInDisplayCurrency, displayCurrencyCode);
-
+  if (isLoading) {
+    // Show a loading screen while data is being fetched
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <Spinner size="lg" />
+      </div>
+    );
+  }
   if (transactions.length === 0 && typeof window !== 'undefined') {
     return (
       <div className="flex flex-col items-center justify-center min-h-[calc(100vh-10rem)] text-center p-6">

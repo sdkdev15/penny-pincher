@@ -1,7 +1,8 @@
 import { NextApiRequest, NextApiResponse } from "next";
 import { prisma } from "@/lib/prisma";
+import { authMiddleware } from "@/middleware/authMiddleware";
 
-export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+async function handler(req: NextApiRequest, res: NextApiResponse) {
   const { id } = req.query;
 
   if (!id || Array.isArray(id)) {
@@ -21,7 +22,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
       res.status(200).json(category);
     } catch (error) {
-      res.status(500).json({ message: "Failed to fetch category.", error: error.message });
+      res.status(500).json({ message: "Failed to fetch category.", error: error });
     }
   } else if (req.method === "PUT") {
     // Update a category
@@ -38,7 +39,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
       res.status(200).json(updatedCategory);
     } catch (error) {
-      res.status(500).json({ message: "Failed to update category.", error: error.message });
+      res.status(500).json({ message: "Failed to update category.", error: error });
     }
   } else if (req.method === "DELETE") {
     // Delete a category
@@ -49,9 +50,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
       res.status(200).json({ message: "Category deleted successfully." });
     } catch (error) {
-      res.status(500).json({ message: "Failed to delete category.", error: error.message });
+      res.status(500).json({ message: "Failed to delete category.", error: error });
     }
   } else {
     res.status(405).json({ message: "Method not allowed." });
   }
 }
+
+export default authMiddleware(handler);

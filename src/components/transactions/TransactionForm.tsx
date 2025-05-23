@@ -178,7 +178,7 @@ export function TransactionForm({ transactionToEdit, onFormSubmit }: Transaction
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Category</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <Select value={field.value} onValueChange={field.onChange}>
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue placeholder="Select a category" />
@@ -193,8 +193,8 @@ export function TransactionForm({ transactionToEdit, onFormSubmit }: Transaction
                       </SelectContent>
                     </Select>
                     <FormMessage />
-                     <Button variant="link" type="button" className="p-0 h-auto text-sm" asChild>
-                        <a href="/categories?action=add" target="_blank" rel="noopener noreferrer">Manage Categories</a>
+                    <Button variant="link" type="button" className="p-0 h-auto text-sm" asChild>
+                      <a href="/categories?action=add" target="_blank" rel="noopener noreferrer">Manage Categories</a>
                     </Button>
                   </FormItem>
                 )}

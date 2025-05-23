@@ -1,75 +1,164 @@
-
 "use client";
 
-import { useCallback, useMemo } from "react";
-import { v4 as uuidv4 } from "uuid";
-import type { Transaction, TransactionType } from "@/lib/types";
-import { useLocalStorage } from "./useLocalStorage";
-import { format } from "date-fns";
-
-const TRANSACTIONS_STORAGE_KEY = "pennyPincherTransactions";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import type { Transaction } from "@/lib/types";
 
 export function useTransactions() {
-  const initialTransactionsValue = useMemo<Transaction[]>(() => [], []);
-  const [transactions, setTransactions] = useLocalStorage<Transaction[]>(TRANSACTIONS_STORAGE_KEY, initialTransactionsValue);
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
 
-  const addTransaction = useCallback((transactionData: Omit<Transaction, "id" | "createdAt">) => {
-    const newTransaction: Transaction = {
-      ...transactionData,
-      id: uuidv4(),
-      amount: Number(transactionData.amount), // Ensure amount is a number
-      date: format(new Date(transactionData.date), "yyyy-MM-dd"), // Store date as YYYY-MM-DD
-      createdAt: new Date().toISOString(),
-    };
-    setTransactions(prev => [newTransaction, ...prev].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime() || new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()));
-  }, [setTransactions]);
+  // Fetch all transactions from the API
+  const fetchTransactions = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      const response = await fetch("/api/process/transactions", {
+        credentials: "include", 
+      });
 
-  const updateTransaction = useCallback((id: string, updates: Partial<Omit<Transaction, "id" | "createdAt">>) => {
-    setTransactions(prev =>
-      prev.map(t =>
-        t.id === id ? { ...t, ...updates, amount: Number(updates.amount ?? t.amount), date: updates.date ? format(new Date(updates.date), "yyyy-MM-dd") : t.date } : t
-      ).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime() || new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
-    );
-  }, [setTransactions]);
+      if (!response.ok) {
+        throw new Error("Failed to fetch transactions.");
+      }
 
-  const deleteTransaction = useCallback((id: string) => {
-    setTransactions(prev => prev.filter(t => t.id !== id));
-  }, [setTransactions]);
+      const data: Transaction[] = await response.json();
+      setTransactions(data);
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
 
-  const getTransactionById = useCallback((id: string) => {
-    return transactions.find(t => t.id === id);
-  }, [transactions]);
+  // Add a new transaction via the API
+  const addTransaction = useCallback(
+    async (transactionData: Omit<Transaction, "id" | "createdAt">) => {
+      try {
+        const response = await fetch("/api/process/transactions", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          credentials: "include", 
+          body: JSON.stringify(transactionData),
+        });
 
-  const getTransactionsByCategory = useCallback((categoryId: string) => {
-    return transactions.filter(t => t.categoryId === categoryId);
-  }, [transactions]);
+        if (!response.ok) {
+          throw new Error("Failed to add transaction.");
+        }
 
+        const newTransaction: Transaction = await response.json();
+        setTransactions((prev) => [newTransaction, ...prev]);
+      } catch (error) {
+        console.error(error);
+      }
+    },
+    []
+  );
+
+  // Update an existing transaction via the API
+  const updateTransaction = useCallback(
+    async (id: string, updates: Partial<Omit<Transaction, "id" | "createdAt">>) => {
+      try {
+        const response = await fetch(`/api/process/transactions/${id}`, {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          credentials: "include", // Include cookies in the request
+          body: JSON.stringify(updates),
+        });
+
+        if (!response.ok) {
+          throw new Error("Failed to update transaction.");
+        }
+
+        const updatedTransaction: Transaction = await response.json();
+        setTransactions((prev) =>
+          prev.map((t) => (t.id === id ? updatedTransaction : t))
+        );
+      } catch (error) {
+        console.error(error);
+      }
+    },
+    []
+  );
+
+  // Delete a transaction via the API
+  const deleteTransaction = useCallback(
+    async (id: string) => {
+      try {
+        const response = await fetch(`/api/process/transactions/${id}`, {
+          method: "DELETE",
+          credentials: "include", // Include cookies in the request
+        });
+
+        if (!response.ok) {
+          throw new Error("Failed to delete transaction.");
+        }
+
+        setTransactions((prev) => prev.filter((t) => t.id !== id));
+      } catch (error) {
+        console.error(error);
+      }
+    },
+    []
+  );
+
+  // Get a transaction by ID
+  const getTransactionById = useCallback(
+    (id: string) => {
+      return transactions.find((t) => t.id === id);
+    },
+    [transactions]
+  );
+
+  // Get transactions by category
+  const getTransactionsByCategory = useCallback(
+    (categoryId: string) => {
+      return transactions.filter((t) => t.categoryId === categoryId);
+    },
+    [transactions]
+  );
+
+  // Calculate total income
   const totalIncome = useMemo(() => {
     return transactions
-      .filter(t => t.type === "income")
+      .filter((t) => t.type === "income")
       .reduce((sum, t) => sum + t.amount, 0);
   }, [transactions]);
 
+  // Calculate total expenses
   const totalExpenses = useMemo(() => {
     return transactions
-      .filter(t => t.type === "expense")
+      .filter((t) => t.type === "expense")
       .reduce((sum, t) => sum + t.amount, 0);
   }, [transactions]);
 
+  // Calculate current balance
   const currentBalance = useMemo(() => {
     return totalIncome - totalExpenses;
   }, [totalIncome, totalExpenses]);
 
+  // Get recent transactions
   const recentTransactions = useMemo(() => {
     return transactions.slice(0, 5);
   }, [transactions]);
 
-  const hasTransactionsForCategory = useCallback((categoryId: string) => {
-    return transactions.some(t => t.categoryId === categoryId);
-  }, [transactions]);
+  // Check if a category has transactions
+  const hasTransactionsForCategory = useCallback(
+    (categoryId: string) => {
+      return transactions.some((t) => t.categoryId === categoryId);
+    },
+    [transactions]
+  );
+
+  // Fetch transactions on component mount
+  useEffect(() => {
+    fetchTransactions();
+  }, [fetchTransactions]);
 
   return {
     transactions,
+    isLoading,
     addTransaction,
     updateTransaction,
     deleteTransaction,
@@ -82,4 +171,3 @@ export function useTransactions() {
     hasTransactionsForCategory,
   };
 }
-

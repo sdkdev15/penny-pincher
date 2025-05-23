@@ -11,6 +11,7 @@ model User {
   id        Int      @id @default(autoincrement())
   username  String   @unique
   password  String
+  transactions Transaction[]
   isAdmin   Boolean  @default(false)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -21,6 +22,7 @@ model Transaction {
   type        String   // "income" or "expense"
   amount      Float
   categoryId  Int
+  userId      Int      // Foreign key to associate with a user
   date        DateTime
   notes       String?
   createdAt   DateTime @default(now())
@@ -28,6 +30,7 @@ model Transaction {
 
   // Relations
   category    Category @relation(fields: [categoryId], references: [id])
+  user        User     @relation(fields: [userId], references: [id])
 }
 
 model Category {
