@@ -14,7 +14,7 @@ import { useCurrency } from '@/hooks/useCurrency';
 import { formatCurrency, cn } from '@/lib/utils'; 
 
 interface RecentTransactionsTableProps {
-  transactions: Transaction[]; // Amounts in transactions are in base currency (USD)
+  transactions: Transaction[]; 
 }
 
 export function RecentTransactionsTable({ transactions }: RecentTransactionsTableProps) {

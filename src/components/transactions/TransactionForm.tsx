@@ -178,23 +178,40 @@ export function TransactionForm({ transactionToEdit, onFormSubmit }: Transaction
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Category</FormLabel>
-                    <Select value={field.value} onValueChange={field.onChange}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select a category" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {categoryOptions.map((option) => (
-                          <SelectItem key={option.value} value={option.value}>
-                            {option.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+
+                    {categoryOptions.length > 0 ? (
+                      <Select value={field.value} onValueChange={field.onChange}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select a category" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {categoryOptions.map((option) => (
+                            <SelectItem key={option.value} value={option.value}>
+                              {option.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    ) : (
+                      <p className="text-sm text-muted-foreground italic mb-2">No categories found. Add your first category</p>
+                    )}
+
                     <FormMessage />
-                    <Button variant="link" type="button" className="p-0 h-auto text-sm" asChild>
-                      <a href="/categories?action=add" target="_blank" rel="noopener noreferrer">Manage Categories</a>
+                    <Button
+                      variant="link"
+                      type="button"
+                      className="p-0 h-auto text-sm mt-2"
+                      asChild
+                    >
+                      <a
+                        href="/categories?action=add"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        Manage Categories
+                      </a>
                     </Button>
                   </FormItem>
                 )}

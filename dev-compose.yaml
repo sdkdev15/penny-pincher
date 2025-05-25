@@ -1,0 +1,41 @@
+version: '3.9'
+
+services:
+  nodeapp-dev:
+    image: node:20-alpine
+    container_name: penny-dev
+    restart: always
+    working_dir: /app
+    environment:
+      - DATABASE_URL=postgresql://penny:p33nyAdmin@postgres-dev:5432/pennydb
+    volumes:
+      - .:/app
+    ports:
+      - "9003:9002"
+    command: sh -c "npm run dev"
+    depends_on:
+      - postgres-dev
+    networks:
+      - penny-dev-net
+
+  postgres-dev:
+    image: postgres:15-alpine
+    container_name: penny-postgres-dev
+    restart: always
+    environment:
+      - POSTGRES_USER=penny
+      - POSTGRES_PASSWORD=p33nyAdmin
+      - POSTGRES_DB=pennydb
+    ports:
+      - "5433:5432"
+    volumes:
+      - pgdata-dev:/var/lib/postgresql/data
+    networks:
+      - penny-dev-net
+
+volumes:
+  pgdata-dev:
+
+networks:
+  penny-dev-net:
+    driver: bridge

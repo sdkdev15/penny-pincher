@@ -8,14 +8,22 @@ async function deleteUser(req: NextApiRequest, res: NextApiResponse) {
   }
 
   try {
-    const userId = (req as any).user.userId; // Extracted from authMiddleware
+    const loggedInUserId = (req as any).user.userId;
+    const targetUserId = Number(req.query.id);
 
-    // Delete the user
-    await prisma.user.delete({ where: { id: userId } });
+    // Optional: prevent deleting yourself unless that's intended
+    if (Number(loggedInUserId) === targetUserId) {
+      return res.status(400).json({ message: "You cannot delete yourself." });
+    }
+
+    await prisma.user.delete({
+      where: { id: targetUserId },
+    });
 
     res.status(200).json({ message: "User deleted successfully." });
   } catch (error) {
-    res.status(500).json({ message: "Something went wrong.", error: error });
+    console.error("Error deleting user:", error);
+    res.status(500).json({ message: "Something went wrong.", error });
   }
 }
 

@@ -3,10 +3,17 @@ import { prisma } from "@/lib/prisma";
 import { authMiddleware } from "@/middleware/authMiddleware";
 
 async function handler(req: NextApiRequest, res: NextApiResponse) {
+  const userId = (req as any).user.userId; 
+
+  if (!userId) {
+    return res.status(401).json({ message: "Unauthorized" });
+  }
+
   if (req.method === "GET") {
-    // List all categories
+    // List all categories for the logged-in user
     try {
       const categories = await prisma.category.findMany({
+        where: { userId },
         orderBy: { createdAt: "asc" },
       });
       res.status(200).json(categories);
@@ -14,7 +21,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
       res.status(500).json({ message: "Failed to fetch categories.", error: error });
     }
   } else if (req.method === "POST") {
-    // Create a new category
+    // Create a new category for the logged-in user
     const { name, budget, isDefault } = req.body;
 
     if (!name) {
@@ -27,6 +34,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
           name,
           budget: budget ? parseFloat(budget) : null,
           isDefault: isDefault || false,
+          userId, // Associate the category with the logged-in user
         },
       });
       res.status(201).json(category);

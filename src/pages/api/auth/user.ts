@@ -9,7 +9,7 @@ async function getUser(req: NextApiRequest, res: NextApiResponse) {
     // Fetch the user from the database
     const user = await prisma.user.findUnique({
       where: { id: userId },
-      select: { id: true, username: true, createdAt: true, updatedAt: true }, // Exclude sensitive fields like password
+      select: { id: true, username: true, isAdmin: true, createdAt: true, updatedAt: true },
     });
 
     if (!user) {

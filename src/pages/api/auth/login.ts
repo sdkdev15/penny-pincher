@@ -39,7 +39,17 @@ export default async function login(req: NextApiRequest, res: NextApiResponse) {
     );
 
     // Set token in HTTP-only cookie
-    res.setHeader("Set-Cookie", `authToken=${token}; HttpOnly; Path=/; Max-Age=86400; SameSite=Strict; Secure`);
+    const isProd = process.env.NODE_ENV === "production";
+
+    res.setHeader(
+      "Set-Cookie",
+      `authToken=${token}; HttpOnly; Path=/; Max-Age=1800; SameSite=Lax${isProd ? "; Secure" : ""}`
+    );
+
+    // res.setHeader(
+    //   "Set-Cookie",
+    //   `authToken=${token}; HttpOnly; Path=/; Max-Age=1800; SameSite=Lax;}`
+    // );
 
     res.status(200).json({ message: "Login successful." });
   } catch (error) {

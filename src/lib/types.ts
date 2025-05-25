@@ -14,7 +14,7 @@ export interface Category {
   id: string;
   name: string;
   isDefault?: boolean;
-  budget?: number; // Added for budget tracking
+  budget?: number; 
 }
 
 export interface ChartData {
@@ -31,4 +31,4 @@ export interface Currency {
   symbol: string;
 }
 
-export type CurrencyCode = 'USD' | 'IDR' | 'EUR' | 'GBP'; // Extend as needed
+export type CurrencyCode = 'USD' | 'IDR' | 'EUR' | 'GBP'; 

@@ -196,12 +196,12 @@ const handleDelete = (category: Category) => {
             <p className="text-muted-foreground text-center py-4">No categories found. Add one to get started!</p>
           ) : (
             <ScrollArea className="h-[400px]">
-              <Table>
+              <Table className="table-auto min-w-full max-sm:text-xs">
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Name</TableHead>
-                    <TableHead>Budget ({displayCurrencyCode})</TableHead>
-                    <TableHead>Type</TableHead>
+                    <TableHead className="px-4 max-sm:px-2">Name</TableHead>
+                    <TableHead className="px-4 max-sm:px-2">Budget ({displayCurrencyCode})</TableHead>
+                    <TableHead className="px-4 max-sm:px-2">Type</TableHead>
                     <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -210,18 +210,18 @@ const handleDelete = (category: Category) => {
                     const budgetInDisplayCurrency = category.budget ? convertAmount(category.budget, displayCurrencyCode) : undefined;
                     return (
                       <TableRow key={category.id}>
-                        <TableCell className="font-medium">{category.name}</TableCell>
-                        <TableCell>
+                        <TableCell className="p-4 max-sm:p-2 font-medium">{category.name}</TableCell>
+                        <TableCell className="p-4 max-sm:p-2">
                           {budgetInDisplayCurrency ? formatCurrency(budgetInDisplayCurrency, displayCurrencyCode) : <span className="text-muted-foreground">-</span>}
                         </TableCell>
                         <TableCell>
                           {category.isDefault ? (
-                            <span className="text-xs text-muted-foreground py-1 px-2 rounded-full bg-muted">Default</span>
+                            <span className="p-4 max-sm:p-2 text-xs text-muted-foreground py-1 px-2 rounded-full bg-muted">Default</span>
                           ) : (
-                            <span className="text-xs text-muted-foreground py-1 px-2 rounded-full bg-secondary">Custom</span>
+                            <span className="p-4 max-sm:p-2 text-xs text-muted-foreground py-1 px-2 rounded-full bg-secondary">Custom</span>
                           )}
                         </TableCell>
-                        <TableCell className="text-right space-x-2">
+                        <TableCell className="p-4 max-sm:p-2 text-right max-sm:text-middle">
                           <Button variant="ghost" size="icon" onClick={() => handleEdit(category)} className="text-blue-600 hover:text-blue-700">
                             <Edit className="h-4 w-4" />
                             <span className="sr-only">Edit</span>

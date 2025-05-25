@@ -1,10 +1,16 @@
+---
+
 # Penny Pincher
 
 Penny Pincher is a powerful and intuitive personal finance app designed to help you take control of your money. With Penny Pincher, you can easily track your income and expenses, set personalized budgets, and visualize your financial progress—all in one place. Whether you're saving for a big goal or just want to understand your spending habits, Penny Pincher provides the tools and insights you need to make smarter financial decisions.
 
+---
+
 ## Project Status
 
 Penny Pincher is currently in active development. The core features—such as tracking income and expenses, categorizing transactions, generating reports, and setting budgets—are implemented and functional. The app is stable for basic personal finance management and is ready for early adopters to try out and provide feedback.
+
+---
 
 ## Roadmap
 
@@ -15,8 +21,12 @@ Planned improvements and future features include:
 - Multi-currency support
 - Improved security and data encryption
 - Customizable categories and tags
+- Scan and import data from receipts
+- Alert menu to setting up your email/telegram for sending your monthly report
 
 Your feedback and contributions are welcome to help shape the future of Penny Pincher!
+
+---
 
 ## Features
 
@@ -27,7 +37,10 @@ Your feedback and contributions are welcome to help shape the future of Penny Pi
 - **Multi-Currency Support**: Track transactions in different currencies with automatic conversion.
 - **Export Data**: Export your financial data to CSV for further analysis or backup.
 - **User Authentication**: Securely register, log in, and manage your account.
+- **Admin Features**: Manage users and access admin-only features.
 - **Responsive Design**: Optimized for desktop and mobile devices.
+
+---
 
 ## Getting Started
 
@@ -44,7 +57,7 @@ Your feedback and contributions are welcome to help shape the future of Penny Pi
 
 3. **Set up the database:**
     - Ensure you have PostgreSQL installed and running.
-    - Update the `.env` file with your database connection string:
+    - Update the .env file with your database connection string:
       ```
       DATABASE_URL=postgresql://<username>:<password>@<host>:<port>/<database>
       JWT_SECRET=your_jwt_secret
@@ -60,6 +73,8 @@ Your feedback and contributions are welcome to help shape the future of Penny Pi
     npm run dev
     ```
 
+---
+
 ## Project Structure
 
 ```
@@ -69,14 +84,21 @@ penny-pincher/
 │   └── migrations/
 ├── src/
 │   ├── api/               # API routes for authentication, transactions, and categories
-│   │   ├── auth/
-│   │   ├── transactions/
-│   │   └── categories/
+│   │   ├── auth/          # Authentication-related routes (e.g., login, register, delete)
+│   │   ├── transactions/  # Transaction-related routes
+│   │   └── categories/    # Category-related routes
+│   ├── app/               # Next.js app directory
+│   │   ├── users/         # User management page (admin-only)
+│   │   ├── transactions/  # Transactions page
+│   │   └── categories/    # Categories page
 │   ├── components/        # React components
+│   │   ├── layout/        # Layout components (e.g., SidebarNav)
+│   │   ├── ui/            # Reusable UI components (e.g., buttons, modals, tables)
 │   │   ├── categories/    # Category management components
 │   │   ├── transactions/  # Transaction management components
 │   │   └── reports/       # Financial reports components
-│   ├── hooks/             # Custom React hooks
+│   ├── contexts/          # React context providers (e.g., AuthContext, ThemeContext)
+│   ├── hooks/             # Custom React hooks (e.g., useAuth, useTheme)
 │   ├── lib/               # Utility libraries (e.g., constants, Prisma client)
 │   ├── pages/             # Next.js pages
 │   │   ├── api/           # API routes
@@ -91,6 +113,8 @@ penny-pincher/
 ├── README.md
 └── tsconfig.json          # TypeScript configuration
 ```
+
+---
 
 ## API Endpoints
 
@@ -117,6 +141,8 @@ penny-pincher/
 - `PUT /api/categories/:id`: Update a category by ID.
 - `DELETE /api/categories/:id`: Delete a category by ID.
 
+---
+
 ## Contributing
 
 Contributions are welcome! Please follow these steps to contribute:
@@ -126,34 +152,20 @@ Contributions are welcome! Please follow these steps to contribute:
    ```bash
    git checkout -b feature-name
    ```
-3. Commit your changes  
+3. Commit your changes:
    ```bash
    git commit -m "Add feature-name"
    ```
-4. Push to your branch
+4. Push to your branch:
    ```bash
    git push origin feature-name
    ```
-5. Open Pull request
+5. Open a Pull Request.
+
+---
 
 ## License
 
 This project is licensed under the MIT License.
 
 ---
-
-### Key Updates:
-1. **Features Section**: Added details about the app's features based on the scanned files.
-2. **Getting Started**: Included database setup instructions and Prisma migration steps.
-3. **Project Structure**: Updated to reflect the current folder structure, including `api`, `components`, and `hooks`.
-4. **API Endpoints**: Documented all available API routes for authentication, transactions, and categories.
-
-Let me know if you need further adjustments!---
-
-### Key Updates:
-1. **Features Section**: Added details about the app's features based on the scanned files.
-2. **Getting Started**: Included database setup instructions and Prisma migration steps.
-3. **Project Structure**: Updated to reflect the current folder structure, including `api`, `components`, and `hooks`.
-4. **API Endpoints**: Documented all available API routes for authentication, transactions, and categories.
-
-Let me know if you need further adjustments!

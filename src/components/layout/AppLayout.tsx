@@ -77,14 +77,14 @@ export function AppLayout({ children }: { children: ReactNode }) {
           <SidebarNav />
         </SidebarContent>
         <SidebarFooter className="p-4 space-y-2">
-           <div className="flex items-center space-x-2 text-sidebar-foreground">
+          <div className="flex items-center space-x-2 text-sidebar-foreground">
             <Globe className="h-4 w-4" />
             <Select value={currency} onValueChange={(value) => setCurrency(value as CurrencyCode)}>
               <SelectTrigger className="w-full bg-sidebar border-sidebar-border text-sidebar-foreground focus:ring-sidebar-ring">
                 <SelectValue placeholder="Select currency" />
               </SelectTrigger>
               <SelectContent className="bg-popover text-popover-foreground">
-                {SUPPORTED_CURRENCIES.map(curr => (
+                {SUPPORTED_CURRENCIES.map((curr) => (
                   <SelectItem key={curr.code} value={curr.code}>
                     {curr.name}
                   </SelectItem>
@@ -92,11 +92,19 @@ export function AppLayout({ children }: { children: ReactNode }) {
               </SelectContent>
             </Select>
           </div>
-          <Button variant="ghost" onClick={toggleTheme} className="w-full justify-start text-sidebar-foreground hover:text-sidebar-primary">
-            {theme === 'dark' ? <Sun className="mr-2 h-4 w-4" /> : <Moon className="mr-2 h-4 w-4" />}
+          <Button
+            variant="ghost"
+            onClick={toggleTheme}
+            className="w-full justify-start text-sidebar-foreground hover:text-white"
+          >
+            {theme === "dark" ? <Sun className="mr-2 h-4 w-4" /> : <Moon className="mr-2 h-4 w-4" />}
             Toggle Theme
           </Button>
-          <Button variant="ghost" onClick={logout} className="w-full justify-start text-sidebar-foreground hover:text-sidebar-primary">
+          <Button
+            variant="ghost"
+            onClick={logout}
+            className="w-full justify-start text-sidebar-foreground hover:text-white"
+          >
             <LogOut className="mr-2 h-4 w-4" />
             Logout
           </Button>

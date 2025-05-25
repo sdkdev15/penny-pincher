@@ -3,7 +3,7 @@
 
 import { useState, useMemo, useEffect } from "react";
 import { format, parseISO } from "date-fns";
-import type { Transaction, TransactionType, Category } from "@/lib/types";
+import type { Transaction, TransactionType, CurrencyCode } from "@/lib/types";
 import { useCategories } from "@/hooks/useCategories";
 import { useTransactions } from "@/hooks/useTransactions";
 import { Button } from "@/components/ui/button";
@@ -58,7 +58,7 @@ declare module 'jspdf' {
 }
 
 // Transaction amounts are in base currency
-function convertToCSV(data: Transaction[], getCategoryNameById: (id: string) => string, displayCurrencyCode: string, convertAmountFunc: (amountInBase: number, targetCurrency: string) => number) {
+function convertToCSV(data: Transaction[], getCategoryNameById: (id: string) => string, displayCurrencyCode: CurrencyCode, convertAmountFunc: (amountInBase: number, targetCurrency: CurrencyCode) => number) {
   const headers = ["ID", "Date", "Category", "Type", `Amount (${displayCurrencyCode})`, "Notes", "Created At"];
   const rows = data.map(transaction => {
     const amountInDisplayCurrency = convertAmountFunc(transaction.amount, displayCurrencyCode);
@@ -78,7 +78,7 @@ function convertToCSV(data: Transaction[], getCategoryNameById: (id: string) => 
 
 export function TransactionListClient() {
   const { transactions, deleteTransaction } = useTransactions();
-  const { getCategoryNameById, categoryOptions, categories } = useCategories(); // Added categories
+  const { getCategoryNameById, categoryOptions, categories } = useCategories(); 
   const { toast } = useToast();
   const { currency: displayCurrencyCode, convertAmount } = useCurrency(); 
 
@@ -200,7 +200,7 @@ export function TransactionListClient() {
       theme: 'grid', 
       styles: { fontSize: 8 },
       headStyles: { fillColor: [22, 160, 133] }, // Theme color
-      didDrawPage: (data) => {
+      didDrawPage: (data: any) => {
         const pageCount = doc.getNumberOfPages ? doc.getNumberOfPages() : (doc as any).internal.getNumberOfPages();
         doc.setFontSize(8);
         doc.text(`Page ${data.pageNumber} of ${pageCount}`, data.settings.margin.left, doc.internal.pageSize.height - 10);
@@ -296,7 +296,7 @@ export function TransactionListClient() {
             theme: 'grid',
             styles: { fontSize: 9 },
             headStyles: { fillColor: [68, 132, 153] }, // Another theme color
-            didDrawPage: (data) => {
+            didDrawPage: (data: any) => {
                 const pageCount = doc.getNumberOfPages ? doc.getNumberOfPages() : (doc as any).internal.getNumberOfPages();
                 doc.setFontSize(8);
                 doc.text(`Page ${data.pageNumber} of ${pageCount}`, data.settings.margin.left, doc.internal.pageSize.height - 10);
@@ -314,28 +314,31 @@ export function TransactionListClient() {
 
   return (
     <Card className="shadow-lg">
-      <CardHeader>
+      <CardHeader className="p-4 sm:p-6">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-            <div>
-                <CardTitle>Transaction History</CardTitle>
-                <CardDescription>View and manage all your income and expenses. Amounts are shown in {displayCurrencyCode}.</CardDescription>
-            </div>
-            <div className="flex gap-2">
-                <Button onClick={handleExportCSV} variant="outline" size="sm">
-                    <Download className="mr-2 h-4 w-4" />
-                    Export CSV
-                </Button>
-                <Button onClick={handleExportPDF} variant="outline" size="sm">
-                    <FileText className="mr-2 h-4 w-4" />
-                    Export PDF
-                </Button>
-            </div>
+          <div>
+            <CardTitle className="text-lg sm:text-xl">Transaction History</CardTitle>
+            <CardDescription className="text-sm sm:text-base">
+              View and manage all your income and expenses. Amounts are shown in {displayCurrencyCode}.
+            </CardDescription>
+          </div>
+          <div className="flex gap-2">
+            <Button onClick={handleExportCSV} variant="outline" size="sm" className="p-2 sm:p-3">
+              <Download className="h-4 w-4" />
+            </Button>
+            <Button onClick={handleExportPDF} variant="outline" size="sm" className="p-2 sm:p-3">
+              <FileText className="h-4 w-4" />
+            </Button>
+          </div>
         </div>
       </CardHeader>
-      <CardContent className="space-y-6">
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 p-4 border rounded-lg bg-muted/30">
+      <CardContent className="space-y-4 p-4 sm:p-6">
+        {/* Filters */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4 p-3 sm:p-4 border rounded-lg bg-muted/30">
           <div>
-            <label htmlFor="searchTerm" className="block text-sm font-medium text-muted-foreground mb-1">Search</label>
+            <label htmlFor="searchTerm" className="block text-xs sm:text-sm font-medium text-muted-foreground mb-1">
+              Search
+            </label>
             <div className="relative">
               <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
               <Input
@@ -343,14 +346,18 @@ export function TransactionListClient() {
                 placeholder={`Notes, category, amount (in ${BASE_CURRENCY_CODE})...`}
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-8"
+                className="pl-8 text-sm"
               />
             </div>
           </div>
           <div>
-            <label htmlFor="filterType" className="block text-sm font-medium text-muted-foreground mb-1">Type</label>
+            <label htmlFor="filterType" className="block text-xs sm:text-sm font-medium text-muted-foreground mb-1">
+              Type
+            </label>
             <Select value={filterType} onValueChange={(value) => setFilterType(value as TransactionType | "all")}>
-              <SelectTrigger id="filterType"><SelectValue /></SelectTrigger>
+              <SelectTrigger id="filterType" className="text-sm">
+                <SelectValue />
+              </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Types</SelectItem>
                 <SelectItem value="income">Income</SelectItem>
@@ -359,24 +366,34 @@ export function TransactionListClient() {
             </Select>
           </div>
           <div>
-            <label htmlFor="filterCategory" className="block text-sm font-medium text-muted-foreground mb-1">Category</label>
+            <label htmlFor="filterCategory" className="block text-xs sm:text-sm font-medium text-muted-foreground mb-1">
+              Category
+            </label>
             <Select value={filterCategory} onValueChange={setFilterCategory}>
-              <SelectTrigger id="filterCategory"><SelectValue /></SelectTrigger>
+              <SelectTrigger id="filterCategory" className="text-sm">
+                <SelectValue />
+              </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Categories</SelectItem>
-                {categoryOptions.map(opt => <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>)}
+                {categoryOptions.map((opt) => (
+                  <SelectItem key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>
-           <div>
-             <label htmlFor="filterDate" className="block text-sm font-medium text-muted-foreground mb-1">Date Range</label>
+          <div>
+            <label htmlFor="filterDate" className="block text-xs sm:text-sm font-medium text-muted-foreground mb-1">
+              Date Range
+            </label>
             <Popover>
               <PopoverTrigger asChild>
                 <Button
                   id="filterDate"
                   variant={"outline"}
                   className={cn(
-                    "w-full justify-start text-left font-normal",
+                    "w-full justify-start text-left font-normal text-sm",
                     !filterDateRange && "text-muted-foreground"
                   )}
                 >
@@ -384,8 +401,7 @@ export function TransactionListClient() {
                   {filterDateRange?.from ? (
                     filterDateRange.to ? (
                       <>
-                        {format(filterDateRange.from, "LLL dd, y")} -{" "}
-                        {format(filterDateRange.to, "LLL dd, y")}
+                        {format(filterDateRange.from, "LLL dd, y")} - {format(filterDateRange.to, "LLL dd, y")}
                       </>
                     ) : (
                       format(filterDateRange.from, "LLL dd, y")
@@ -402,33 +418,48 @@ export function TransactionListClient() {
                   defaultMonth={filterDateRange?.from}
                   selected={filterDateRange}
                   onSelect={setFilterDateRange}
-                  numberOfMonths={2}
+                  numberOfMonths={1}
                 />
-                 <div className="p-2 border-t text-right">
-                    <Button variant="ghost" size="sm" onClick={() => setFilterDateRange(undefined)}>Clear</Button>
+                <div className="p-2 border-t text-right">
+                  <Button variant="ghost" size="sm" onClick={() => setFilterDateRange(undefined)}>
+                    Clear
+                  </Button>
                 </div>
               </PopoverContent>
             </Popover>
           </div>
         </div>
 
+        {/* Transactions Table */}
         {filteredTransactions.length === 0 ? (
-          <div className="text-center py-10 text-muted-foreground">
-            <Filter className="mx-auto h-12 w-12 mb-4 opacity-50" />
-            <p className="text-lg">No transactions match your filters.</p>
-            <p className="text-sm">Try adjusting your search or filter criteria.</p>
+          <div className="text-center py-6 text-muted-foreground">
+            <Filter className="mx-auto h-10 w-10 mb-3 opacity-50" />
+            <p className="text-sm">No transactions match your filters.</p>
+            <p className="text-xs">Try adjusting your search or filter criteria.</p>
           </div>
         ) : (
-          <ScrollArea className="h-[500px] w-full">
-            <Table>
+          <ScrollArea className="h-[400px] w-full">
+            <Table className="table-auto min-w-full text-sm max-sm:text-xs">
               <TableHeader>
                 <TableRow>
-                  <TableHead>Date</TableHead>
-                  <TableHead>Category</TableHead>
-                  <TableHead className="hidden md:table-cell">Notes</TableHead>
-                  <TableHead>Type</TableHead>
-                  <TableHead className="text-right">Amount ({displayCurrencyCode})</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
+                  <TableHead className="h-12 px-4 max-sm:px-2 text-left align-middle font-medium text-muted-foreground">
+                    Date
+                  </TableHead>
+                  <TableHead className="h-12 px-4 max-sm:px-2 text-left align-middle font-medium text-muted-foreground">
+                    Category
+                  </TableHead>
+                  <TableHead className="h-12 px-4 max-sm:px-2 text-left align-middle font-medium text-muted-foreground hidden md:table-cell">
+                    Notes
+                  </TableHead>
+                  <TableHead className="h-12 px-4 max-sm:px-2 text-left align-middle font-medium text-muted-foreground hidden md:table-cell">
+                    Type
+                  </TableHead>
+                  <TableHead className="h-12 px-4 max-sm:px-2 text-right align-middle font-medium text-muted-foreground">
+                    Amount ({displayCurrencyCode})
+                  </TableHead>
+                  <TableHead className="h-12 px-4 max-sm:px-2 text-right align-middle font-medium text-muted-foreground">
+                    Actions
+                  </TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -437,20 +468,40 @@ export function TransactionListClient() {
                   const formattedAmount = formatCurrency(amountInDisplayCurrency, displayCurrencyCode);
                   return (
                     <TableRow key={transaction.id}>
-                      <TableCell>{format(parseISO(transaction.date), "MMM dd, yyyy")}</TableCell>
-                      <TableCell>{getCategoryNameById(transaction.categoryId)}</TableCell>
-                      <TableCell className="hidden md:table-cell max-w-xs truncate">{transaction.notes || "-"}</TableCell>
-                      <TableCell>
-                        <Badge variant={transaction.type === 'income' ? 'default' : 'destructive'} 
-                               className={cn(transaction.type === 'income' ? 'bg-green-500/20 text-green-700 border-green-500/30 hover:bg-green-500/30' : 'bg-red-500/20 text-red-700 border-red-500/30 hover:bg-red-500/30', 'capitalize')}>
+                      <TableCell className="p-4 max-sm:p-2 align-middle">{format(parseISO(transaction.date), "MMM dd, yyyy")}</TableCell>
+                      <TableCell className="p-4 max-sm:p-2 align-middle">{getCategoryNameById(transaction.categoryId)}</TableCell>
+                      <TableCell className="p-4 max-sm:p-2 align-middle hidden md:table-cell max-w-xs truncate">
+                        {transaction.notes || "-"}
+                      </TableCell>
+                      <TableCell className="p-4 max-sm:p-2 align-middle hidden md:table-cell">
+                        <Badge
+                          variant={transaction.type === "income" ? "default" : "destructive"}
+                          className={cn(
+                            transaction.type === "income"
+                              ? "bg-green-500/20 text-green-700 border-green-500/30 hover:bg-green-500/30"
+                              : "bg-red-500/20 text-red-700 border-red-500/30 hover:bg-red-500/30",
+                            "capitalize"
+                          )}
+                        >
                           {transaction.type}
                         </Badge>
                       </TableCell>
-                      <TableCell className={`text-right font-medium ${transaction.type === 'income' ? 'text-green-600' : 'text-red-600'}`}>
-                        {transaction.type === 'income' ? '+' : '-'}{formattedAmount.replace(/^[^\d.,]+/, '')}
+                      <TableCell
+                        className={`p-4 max-sm:p-2 text-right font-medium ${
+                          transaction.type === "income" ? "text-green-600" : "text-red-600"
+                        }`}
+                      >
+                        {transaction.type === "income" ? "+" : "-"}
+                        {formattedAmount.replace(/^[^\d.,]+/, "")}
                       </TableCell>
-                      <TableCell className="text-right">
-                        <Dialog open={isFormOpen && editingTransaction?.id === transaction.id} onOpenChange={(open) => { if(!open) closeFormDialog(); else setIsFormOpen(open); }}>
+                      <TableCell className="p-4 max-sm:p-2 text-right">
+                        <Dialog
+                          open={isFormOpen && editingTransaction?.id === transaction.id}
+                          onOpenChange={(open) => {
+                            if (!open) closeFormDialog();
+                            else setIsFormOpen(open);
+                          }}
+                        >
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild>
                               <Button variant="ghost" className="h-8 w-8 p-0">
@@ -464,13 +515,16 @@ export function TransactionListClient() {
                                 <Edit className="mr-2 h-4 w-4" /> Edit
                               </DropdownMenuItem>
                               <DropdownMenuSeparator />
-                              <DropdownMenuItem onClick={() => handleDelete(transaction.id)} className="text-red-600 focus:text-red-600 focus:bg-red-100">
+                              <DropdownMenuItem
+                                onClick={() => handleDelete(transaction.id)}
+                                className="text-red-600 focus:text-red-600 focus:bg-red-100"
+                              >
                                 <Trash2 className="mr-2 h-4 w-4" /> Delete
                               </DropdownMenuItem>
                             </DropdownMenuContent>
                           </DropdownMenu>
                           {editingTransaction?.id === transaction.id && (
-                             <DialogContent className="sm:max-w-2xl">
+                            <DialogContent className="sm:max-w-2xl">
                               <TransactionForm transactionToEdit={editingTransaction} onFormSubmit={closeFormDialog} />
                             </DialogContent>
                           )}

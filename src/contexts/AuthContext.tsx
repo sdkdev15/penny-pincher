@@ -4,9 +4,14 @@ import type { ReactNode } from "react";
 import { createContext, useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 
+interface User {
+  username: string;
+  isAdmin: boolean; // Add isAdmin to the user type
+}
+
 interface AuthContextType {
   isAuthenticated: boolean;
-  user: { username: string } | null;
+  user: User | null;
   isLoading: boolean;
   login: (usernameInput: string, passwordInput: string) => Promise<boolean>;
   logout: () => void;
@@ -15,7 +20,7 @@ interface AuthContextType {
 export const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<{ username: string } | null>(null);
+  const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const router = useRouter();
 
@@ -31,7 +36,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         });
 
         if (response.ok) {
-          const data = await response.json();
+          const data: User = await response.json(); // Ensure the user object includes isAdmin
           setUser(data);
         } else {
           setUser(null);
@@ -58,7 +63,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         });
 
         if (!response.ok) {
-          alert("Invalid credentials");
+          // alert("Invalid credentials");
           return false;
         }
 
@@ -69,17 +74,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         });
 
         if (userResponse.ok) {
-          const data = await userResponse.json();
+          const data: User = await userResponse.json(); // Ensure the user object includes isAdmin
           setUser(data);
           router.push("/");
           return true;
         } else {
-          alert("Failed to fetch user information after login.");
+          // alert("Failed to fetch user information after login.");
           return false;
         }
       } catch (error) {
         console.error("Login failed:", error);
-        alert("An error occurred during login.");
+        // alert("An error occurred during login.");
         return false;
       }
     },
@@ -97,11 +102,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setUser(null);
         router.push("/login");
       } else {
-        alert("Failed to log out.");
+        // alert("Failed to log out.");
       }
     } catch (error) {
       console.error("Logout failed:", error);
-      alert("An error occurred during logout.");
+      // alert("An error occurred during logout.");
     }
   }, [router]);
 

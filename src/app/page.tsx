@@ -8,7 +8,7 @@ import { useTransactions } from "@/hooks/useTransactions";
 import Image from "next/image";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { Spinner } from "@/components/ui/spinner"; // Import a spinner component
+import { Spinner } from "@/components/ui/spinner"; 
 
 export default function DashboardPage() {
   const { currentBalance, totalIncome, totalExpenses, recentTransactions, transactions, isLoading } = useTransactions();

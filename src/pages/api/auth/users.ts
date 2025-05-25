@@ -13,7 +13,7 @@ async function getAllUsers(req: NextApiRequest, res: NextApiResponse) {
     }
 
     const users = await prisma.user.findMany({
-      select: { id: true, username: true, createdAt: true, updatedAt: true },
+      select: { id: true, username: true, isAdmin: true, createdAt: true, updatedAt: true },
     });
 
     res.status(200).json(users);

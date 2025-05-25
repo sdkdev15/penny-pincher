@@ -8,27 +8,41 @@ async function updateUser(req: NextApiRequest, res: NextApiResponse) {
     return res.status(405).json({ message: "Method not allowed" });
   }
 
-  const { password } = req.body;
+  const { password, userId: targetUserId } = req.body;
 
   if (!password) {
     return res.status(400).json({ message: "Password is required." });
   }
 
   try {
-    const userId = (req as any).user.userId; // Extracted from authMiddleware
+    const user = (req as any).user; // { userId, isAdmin, ... }
 
-    // Hash the new password
+    // Only admins can reset passwords
+    // if (!user.isAdmin) {
+    //   return res.status(403).json({ message: "Forbidden: Admins only." });
+    // }
+
+    // Determine which user to reset
+    const resetUserId = targetUserId || user.userId;
+
+    const existingUser = await prisma.user.findUnique({
+      where: { id: resetUserId },
+    });
+
+    if (!existingUser) {
+      return res.status(404).json({ message: "User not found." });
+    }
+
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // Update the user's password
     await prisma.user.update({
-      where: { id: userId },
+      where: { id: resetUserId },
       data: { password: hashedPassword },
     });
 
     res.status(200).json({ message: "Password updated successfully." });
   } catch (error) {
-    res.status(500).json({ message: "Something went wrong.", error: error });
+    res.status(500).json({ message: "Something went wrong.", error });
   }
 }
 

@@ -2,10 +2,12 @@
 
 import { useState, type FormEvent } from "react";
 import { useAuth } from "@/hooks/useAuth";
+import { useRouter } from "next/navigation"; // Import useRouter for navigation
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Modal } from "@/components/ui/modal"; // Import the Modal component
 import { Coins } from "lucide-react";
 import { APP_NAME } from "@/lib/constants";
 
@@ -13,25 +15,42 @@ export default function LoginPage() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const { login } = useAuth();
+  const router = useRouter(); // Initialize router for navigation
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [isRedirecting, setIsRedirecting] = useState(false); // State for redirect loading
+  const [isErrorModalOpen, setIsErrorModalOpen] = useState(false); // State for error modal
+  const [errorMessage, setErrorMessage] = useState<string | null>(null); // Error message for the modal
 
   const handleSubmit = async (event: FormEvent) => {
     event.preventDefault();
     setIsLoading(true);
-    setError(null); // Clear previous errors
+    setErrorMessage(null); // Clear previous errors
 
     try {
       const success = await login(username, password);
-      if (!success) {
-        setError("Invalid username or password. Please try again.");
+      if (success) {
+        setIsRedirecting(true); // Set redirect loading state
+        router.push("/"); // Redirect to the dashboard
+      } else {
+        setErrorMessage("Invalid username or password. Please try again.");
+        setIsErrorModalOpen(true); // Open the error modal
       }
     } catch (err) {
-      setError("An unexpected error occurred. Please try again later.");
+      setErrorMessage("An unexpected error occurred. Please try again later.");
+      setIsErrorModalOpen(true); // Open the error modal
     } finally {
       setIsLoading(false);
     }
   };
+
+  if (isRedirecting) {
+    // Show a loading screen while redirecting
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-background">
+        <p className="text-lg font-medium text-muted-foreground">Redirecting to dashboard...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-background p-4">
@@ -67,20 +86,25 @@ export default function LoginPage() {
                 className="bg-input"
               />
             </div>
-            {error && (
-              <p className="text-center text-sm text-red-500">
-                {error}
-              </p>
-            )}
             <Button type="submit" className="w-full" disabled={isLoading}>
               {isLoading ? "Signing In..." : "Sign In"}
             </Button>
-            <p className="text-center text-sm text-muted-foreground">
-              Starter: use <strong>penny</strong> / <strong>admin</strong>
-            </p>
           </form>
         </CardContent>
       </Card>
+
+      {/* Error Modal */}
+      {isErrorModalOpen && (
+        <Modal onClose={() => setIsErrorModalOpen(false)}>
+          <h2 className="text-xl font-bold mb-4 text-red-500">Error</h2>
+          <p className="text-gray-800 dark:text-gray-300">{errorMessage}</p>
+          <div className="flex justify-end mt-4">
+            <Button variant="ghost" onClick={() => setIsErrorModalOpen(false)}>
+              Close
+            </Button>
+          </div>
+        </Modal>
+      )}
     </div>
   );
 }

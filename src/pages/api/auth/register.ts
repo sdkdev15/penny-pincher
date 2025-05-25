@@ -7,6 +7,13 @@ export default async function register(req: NextApiRequest, res: NextApiResponse
     return res.status(405).json({ message: "Method not allowed" });
   }
 
+  // Check database connection
+  try {
+    await prisma.$connect();
+  } catch (dbError) {
+    return res.status(500).json({ message: "Failed to connect to the database." });
+  }
+
   const { username, password, isAdmin } = req.body;
 
   if (!username || !password) {
