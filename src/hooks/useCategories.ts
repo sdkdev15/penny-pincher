@@ -60,7 +60,7 @@ export function useCategories() {
 
   // Update an existing category via the API
   const updateCategory = useCallback(
-    async (id: string, name: string, budget?: number) => {
+    async (id: number, name: string, budget?: number) => {
       if (name.trim() === "") {
         throw new Error("Category name cannot be empty.");
       }
@@ -92,7 +92,7 @@ export function useCategories() {
 
   // Delete a category via the API
   const deleteCategory = useCallback(
-    async (id: string) => {
+    async (id: number) => {
       try {
         const response = await fetch(`/api/process/categories/${id}`, {
           method: "DELETE",
@@ -113,7 +113,7 @@ export function useCategories() {
 
   // Get a category name by ID
   const getCategoryNameById = useCallback(
-    (id: string) => {
+    (id: number) => {
       return categories.find((cat) => cat.id === id)?.name || "Uncategorized";
     },
     [categories]

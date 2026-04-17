@@ -58,7 +58,7 @@ declare module 'jspdf' {
 }
 
 // Transaction amounts are in base currency
-function convertToCSV(data: Transaction[], getCategoryNameById: (id: string) => string, displayCurrencyCode: CurrencyCode, convertAmountFunc: (amountInBase: number, targetCurrency: CurrencyCode) => number) {
+function convertToCSV(data: Transaction[], getCategoryNameById: (id: number) => string, displayCurrencyCode: CurrencyCode, convertAmountFunc: (amountInBase: number, targetCurrency: CurrencyCode) => number) {
   const headers = ["ID", "Date", "Category", "Type", `Amount (${displayCurrencyCode})`, "Notes", "Created At"];
   const rows = data.map(transaction => {
     const amountInDisplayCurrency = convertAmountFunc(transaction.amount, displayCurrencyCode);
@@ -96,7 +96,7 @@ export function TransactionListClient({ refreshKey }: { refreshKey: number }) {
   const filteredTransactions = useMemo(() => {
     return transactions.filter((transaction) => {
       const typeMatch = filterType === "all" || transaction.type === filterType;
-      const categoryMatch = filterCategory === "all" || transaction.categoryId === filterCategory;
+      const categoryMatch = filterCategory === "all" || transaction.categoryId === parseInt(filterCategory);
       
       let dateMatch = true;
       if (filterDateRange?.from) {
@@ -253,7 +253,7 @@ export function TransactionListClient({ refreshKey }: { refreshKey: number }) {
     doc.text(`Budget Overview (${dateRangeText})`, 14, currentY);
     currentY += 7;
 
-    const expensesByCategoryBase: { [categoryId: string]: number } = {};
+    const expensesByCategoryBase: { [categoryId: number]: number } = {};
     filteredTransactions
         .filter(t => t.type === 'expense')
         .forEach(t => {
@@ -263,8 +263,9 @@ export function TransactionListClient({ refreshKey }: { refreshKey: number }) {
     const budgetTableColumn = ["Category", `Spent (${displayCurrencyCode})`, `Budget (${displayCurrencyCode})`, "Status"];
     const budgetTableRows: string[][] = [];
 
-    Object.keys(expensesByCategoryBase).forEach(categoryId => {
-      const category = categories.find(cat => cat.id === parseInt(categoryId)); 
+    Object.keys(expensesByCategoryBase).forEach(categoryIdStr => {
+      const categoryId = parseInt(categoryIdStr);
+      const category = categories.find(cat => cat.id === categoryId); 
       if (!category) return;
 
       const spentBase = expensesByCategoryBase[categoryId];

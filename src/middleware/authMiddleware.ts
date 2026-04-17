@@ -1,8 +1,21 @@
 import { NextApiRequest, NextApiResponse, NextApiHandler } from "next";
 import jwt from "jsonwebtoken";
 
+// Extend NextApiRequest to include authenticated user
+declare global {
+  namespace Express {
+    interface Request {
+      user?: { userId: number };
+    }
+  }
+}
+
+interface AuthenticatedRequest extends NextApiRequest {
+  user?: { userId: number };
+}
+
 export function authMiddleware(handler: NextApiHandler) {
-  return async (req: NextApiRequest, res: NextApiResponse) => {
+  return async (req: AuthenticatedRequest, res: NextApiResponse) => {
     // Extract the token from cookies
     const token = req.cookies.authToken;
 
@@ -17,13 +30,25 @@ export function authMiddleware(handler: NextApiHandler) {
       }
 
       // Verify the token
-      const decoded = jwt.verify(token, jwtSecret) as { userId: number };
-      (req as any).user = decoded; 
+      const decoded = jwt.verify(token, jwtSecret) as { userId?: number };
+      
+      // Validate that userId exists in decoded token
+      if (!decoded.userId) {
+        return res.status(401).json({ message: "Unauthorized: Invalid token structure." });
+      }
+
+      req.user = { userId: decoded.userId };
 
       // Proceed to the next handler
       return handler(req, res);
     } catch (error) {
-      return res.status(401).json({ message: "Unauthorized: Invalid token." });
+      // Differentiate between JWT errors
+      if (error instanceof jwt.TokenExpiredError) {
+        return res.status(401).json({ message: "Unauthorized: Token has expired." });
+      } else if (error instanceof jwt.JsonWebTokenError) {
+        return res.status(401).json({ message: "Unauthorized: Invalid token." });
+      }
+      return res.status(401).json({ message: "Unauthorized: Authentication failed." });
     }
   };
 }

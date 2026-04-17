@@ -63,7 +63,7 @@ export function TransactionForm({ transactionToEdit, onFormSubmit }: Transaction
     ? {
         amount: transactionToEdit.amount, // Amount is stored in base currency
         type: transactionToEdit.type,
-        categoryId: transactionToEdit.categoryId,
+        categoryId: transactionToEdit.categoryId.toString(),
         date: parseISO(transactionToEdit.date), 
         notes: transactionToEdit.notes || "",
       }
@@ -85,6 +85,7 @@ export function TransactionForm({ transactionToEdit, onFormSubmit }: Transaction
       const transactionData = {
         ...data,
         amount: Number(data.amount),
+        categoryId: Number(data.categoryId),
         date: format(data.date, "yyyy-MM-dd"),
       };
 

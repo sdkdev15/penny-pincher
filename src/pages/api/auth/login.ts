@@ -39,12 +39,13 @@ export default async function login(req: NextApiRequest, res: NextApiResponse) {
     );
 
     // Set token in HTTP-only cookie
-    // For cross-origin requests (IP access), use flexible SameSite and omit Secure for HTTP
+    // For production, use Secure flag and Strict SameSite
     const isSecure = process.env.NODE_ENV === "production";
+    const secureFlag = isSecure ? "; Secure" : "";
     
     res.setHeader(
       "Set-Cookie",
-      `authToken=${token}; HttpOnly; Path=/; Max-Age=86400; SameSite=Strict`
+      `authToken=${token}; HttpOnly; Path=/; Max-Age=86400; SameSite=Strict${secureFlag}`
     );
 
     res.status(200).json({ message: "Login successful." });

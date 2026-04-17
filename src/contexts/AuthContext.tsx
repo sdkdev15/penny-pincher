@@ -1,7 +1,7 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { createContext, useState, useEffect, useCallback } from "react";
+import { createContext, useState, useEffect, useCallback, useMemo } from "react";
 import { useRouter } from "next/navigation";
 
 interface User {
@@ -38,8 +38,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         });
 
         if (response.ok) {
-          const data: User = await response.json();
-          setUser(data);
+          const data = await response.json();
+          // Validate that data has required User properties
+          if (data && typeof data === 'object' && 'username' in data && 'isAdmin' in data) {
+            setUser(data as User);
+          } else {
+            setUser(null);
+          }
         } else {
           setUser(null);
         }
@@ -125,8 +130,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setError(null);
   }, []);
 
+  const value = useMemo(() => ({
+    isAuthenticated,
+    user,
+    isLoading,
+    error,
+    login,
+    logout,
+    clearError,
+  }), [isAuthenticated, user, isLoading, error, login, logout, clearError]);
+
   return (
-    <AuthContext.Provider value={{ isAuthenticated, user, isLoading, error, login, logout, clearError }}>
+    <AuthContext.Provider value={value}>
       {children}
     </AuthContext.Provider>
   );
