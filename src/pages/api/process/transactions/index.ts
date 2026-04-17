@@ -15,7 +15,8 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
       });
       res.status(200).json(transactions);
     } catch (error) {
-      res.status(500).json({ message: "Failed to fetch transactions.", error: error });
+      console.error("Error fetching transactions:", error);
+      res.status(500).json({ message: "Failed to fetch transactions." });
     }
   } else if (req.method === "POST") {
     // Create a new transaction
@@ -38,7 +39,8 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
       });
       res.status(201).json(transaction);
     } catch (error) {
-      res.status(500).json({ message: "Failed to create transaction.", error: error });
+      console.error("Error creating transaction:", error);
+      res.status(500).json({ message: "Failed to create transaction." });
     }
   } else {
     res.status(405).json({ message: "Method not allowed." });

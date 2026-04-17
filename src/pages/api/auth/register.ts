@@ -40,6 +40,7 @@ export default async function register(req: NextApiRequest, res: NextApiResponse
 
     res.status(201).json({ message: "User registered successfully.", user: { id: user.id, username: user.username } });
   } catch (error) {
-    res.status(500).json({ message: "Something went wrong.", error: error });
+    console.error("Registration error:", error);
+    res.status(500).json({ message: "Something went wrong." });
   }
 }

@@ -11,7 +11,7 @@ services:
     volumes:
       - .:/app
     ports:
-      - "9003:9002"
+      - "9003:9003"
     command: sh -c "npm run dev"
     depends_on:
       - postgres-dev

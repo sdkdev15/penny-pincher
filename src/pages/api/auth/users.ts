@@ -18,7 +18,8 @@ async function getAllUsers(req: NextApiRequest, res: NextApiResponse) {
 
     res.status(200).json(users);
   } catch (error) {
-    res.status(500).json({ message: "Something went wrong.", error: error });
+    console.error("Users fetch error:", error);
+    res.status(500).json({ message: "Something went wrong." });
   }
 }
 

@@ -19,19 +19,29 @@ model User {
 }
 
 model Transaction {
-  id          Int      @id @default(autoincrement())
-  type        String   // "income" or "expense"
-  amount      Float
-  categoryId  Int
-  userId      Int      // Foreign key to associate with a user
-  date        DateTime
-  notes       String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id                   Int       @id @default(autoincrement())
+  type                 String    // "income" or "expense"
+  amount               Float
+  categoryId           Int
+  userId               Int       // Foreign key to associate with a user
+  date                 DateTime
+  notes                String?
+  receiptImage         String?   // Path/URL to receipt image
+  receiptData          Json?     // OCR extracted data (merchant, date, items, raw_text)
+  scannedFromReceipt   Boolean   @default(false) // Flag if transaction created from receipt scan
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
 
   // Relations
   category    Category @relation(fields: [categoryId], references: [id])
-  user   User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Indexes for query performance
+  @@index([userId])
+  @@index([categoryId])
+  @@index([date])
+  @@index([type])
+  @@index([userId, date])
 }
 
 model Category {
@@ -44,4 +54,9 @@ model Category {
   user        User           @relation(fields: [userId], references: [id], onDelete: Cascade)
   createdAt   DateTime       @default(now())
   updatedAt   DateTime       @updatedAt
+
+  // Indexes for query performance
+  @@index([userId])
+  @@index([isDefault])
+  @@index([userId, isDefault])
 }

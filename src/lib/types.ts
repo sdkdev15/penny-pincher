@@ -1,17 +1,17 @@
 export type TransactionType = "income" | "expense";
 
 export interface Transaction {
-  id: string;
+  id: number;
   amount: number;
   type: TransactionType;
-  categoryId: string;
+  categoryId: number;
   date: string; // ISO string date
   notes?: string;
   createdAt: string; // ISO string date
 }
 
 export interface Category {
-  id: string;
+  id: number;
   name: string;
   isDefault?: boolean;
   budget?: number; 

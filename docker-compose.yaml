@@ -1,17 +1,12 @@
 services:
   nodeapp:
-    # image: node:20-alpine
     build:
       context: .
       dockerfile: Dockerfile
     container_name: penny
     restart: always
-    # working_dir: /app
-    # volumes:
-    #   - .:/app
     ports:
-      - "9002:3000"  
-    # command: sh -c "npm install && npm run dev"
+      - "9002:3000"
 
   postgres:
     image: postgres:15-alpine
@@ -25,5 +20,21 @@ services:
       - "5432:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
+
+  receipt-scan:
+    build:
+      context: ./receipt-scan
+      dockerfile: Dockerfile
+    container_name: penny-receipt-scan
+    restart: always
+    ports:
+      - "8000:8000"
+    environment:
+      - PYTHONUNBUFFERED=1
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+
 volumes:
   pgdata:

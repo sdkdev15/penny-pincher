@@ -42,7 +42,8 @@ async function updateUser(req: NextApiRequest, res: NextApiResponse) {
 
     res.status(200).json({ message: "Password updated successfully." });
   } catch (error) {
-    res.status(500).json({ message: "Something went wrong.", error });
+    console.error("User update error:", error);
+    res.status(500).json({ message: "Something went wrong." });
   }
 }
 

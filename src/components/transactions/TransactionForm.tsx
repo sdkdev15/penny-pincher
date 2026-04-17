@@ -82,10 +82,9 @@ export function TransactionForm({ transactionToEdit, onFormSubmit }: Transaction
 
   const onSubmit = (data: TransactionFormValues) => {
     try {
-      // Amount is entered and stored in BASE_CURRENCY_CODE (USD)
       const transactionData = {
         ...data,
-        amount: Number(data.amount), // Ensure it's a number
+        amount: Number(data.amount),
         date: format(data.date, "yyyy-MM-dd"),
       };
 
@@ -95,15 +94,16 @@ export function TransactionForm({ transactionToEdit, onFormSubmit }: Transaction
       } else {
         addTransaction(transactionData);
         toast({ title: "Success!", description: "Transaction added successfully." });
-        form.reset({ 
-          amount: "" as unknown as number, 
+        form.reset({
+          amount: "" as unknown as number,
           type: "expense" as TransactionType,
           categoryId: "",
           date: new Date(),
           notes: "",
         });
       }
-      if (onFormSubmit) onFormSubmit();
+
+      if (onFormSubmit) onFormSubmit(); 
     } catch (error) {
       const message = error instanceof Error ? error.message : "An unknown error occurred.";
       toast({ title: "Error", description: message, variant: "destructive" });

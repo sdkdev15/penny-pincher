@@ -39,20 +39,17 @@ export default async function login(req: NextApiRequest, res: NextApiResponse) {
     );
 
     // Set token in HTTP-only cookie
-    const isProd = process.env.NODE_ENV === "production";
-
+    // For cross-origin requests (IP access), use flexible SameSite and omit Secure for HTTP
+    const isSecure = process.env.NODE_ENV === "production";
+    
     res.setHeader(
       "Set-Cookie",
-      `authToken=${token}; HttpOnly; Path=/; Max-Age=1800; SameSite=Lax${isProd ? "; Secure" : ""}`
+      `authToken=${token}; HttpOnly; Path=/; Max-Age=86400; SameSite=Strict`
     );
-
-    // res.setHeader(
-    //   "Set-Cookie",
-    //   `authToken=${token}; HttpOnly; Path=/; Max-Age=1800; SameSite=Lax;}`
-    // );
 
     res.status(200).json({ message: "Login successful." });
   } catch (error) {
-    res.status(500).json({ message: "Something went wrong.", error: error });
+    console.error("Login error:", error);
+    res.status(500).json({ message: "Something went wrong." });
   }
 }

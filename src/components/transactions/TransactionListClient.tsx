@@ -76,8 +76,8 @@ function convertToCSV(data: Transaction[], getCategoryNameById: (id: string) => 
   return [headers.join(','), ...rows.map(row => row.join(','))].join('\n');
 }
 
-export function TransactionListClient() {
-  const { transactions, deleteTransaction } = useTransactions();
+export function TransactionListClient({ refreshKey }: { refreshKey: number }) {
+  const { transactions, fetchTransactions, deleteTransaction } = useTransactions();
   const { getCategoryNameById, categoryOptions, categories } = useCategories(); 
   const { toast } = useToast();
   const { currency: displayCurrencyCode, convertAmount } = useCurrency(); 
@@ -89,6 +89,9 @@ export function TransactionListClient() {
   
   const [editingTransaction, setEditingTransaction] = useState<Transaction | undefined>(undefined);
   const [isFormOpen, setIsFormOpen] = useState(false);
+  useEffect(() => {
+      fetchTransactions();
+  }, [refreshKey]);
 
   const filteredTransactions = useMemo(() => {
     return transactions.filter((transaction) => {
@@ -243,7 +246,11 @@ export function TransactionListClient() {
 
     // Budget Overview
     doc.setFontSize(14);
-    doc.text("Budget Overview (for selected period)", 14, currentY);
+    const dateRangeText = filterDateRange?.from
+      ? `${format(filterDateRange.from, "MMM dd, yyyy")} - ${filterDateRange.to ? format(filterDateRange.to, "MMM dd, yyyy") : "Present"}`
+      : "All Time";
+
+    doc.text(`Budget Overview (${dateRangeText})`, 14, currentY);
     currentY += 7;
 
     const expensesByCategoryBase: { [categoryId: string]: number } = {};
@@ -257,36 +264,36 @@ export function TransactionListClient() {
     const budgetTableRows: string[][] = [];
 
     Object.keys(expensesByCategoryBase).forEach(categoryId => {
-        const category = categories.find(cat => cat.id === categoryId);
-        if (!category) return;
+      const category = categories.find(cat => cat.id === parseInt(categoryId)); 
+      if (!category) return;
 
-        const spentBase = expensesByCategoryBase[categoryId];
-        const spentDisplay = convertAmount(spentBase, displayCurrencyCode);
-        
-        let budgetDisplayStr = "N/A";
-        let status = "No budget set";
+      const spentBase = expensesByCategoryBase[categoryId];
+      const spentDisplay = convertAmount(spentBase, displayCurrencyCode);
 
-        if (category.budget && category.budget > 0) {
-            const budgetBase = category.budget;
-            const budgetDisplay = convertAmount(budgetBase, displayCurrencyCode);
-            budgetDisplayStr = formatCurrency(budgetDisplay, displayCurrencyCode);
-            
-            const differenceBase = spentBase - budgetBase;
-            const differenceDisplay = convertAmount(differenceBase, displayCurrencyCode);
+      let budgetDisplayStr = "N/A";
+      let status = "No budget set";
 
-            if (differenceBase > 0) {
-                status = `Over budget by ${formatCurrency(differenceDisplay, displayCurrencyCode)}`;
-            } else {
-                status = `Under budget by ${formatCurrency(Math.abs(differenceDisplay), displayCurrencyCode)}`;
-            }
-        }
-        budgetTableRows.push([
-            category.name,
-            formatCurrency(spentDisplay, displayCurrencyCode),
-            budgetDisplayStr,
-            status,
-        ]);
-    });
+      if (category.budget && category.budget > 0) {
+          const budgetBase = category.budget;
+          const budgetDisplay = convertAmount(budgetBase, displayCurrencyCode);
+          budgetDisplayStr = formatCurrency(budgetDisplay, displayCurrencyCode);
+
+          const differenceBase = spentBase - budgetBase;
+          const differenceDisplay = convertAmount(differenceBase, displayCurrencyCode);
+
+          if (differenceBase > 0) {
+              status = `Over budget by ${formatCurrency(differenceDisplay, displayCurrencyCode)}`;
+          } else {
+              status = `Under budget by ${formatCurrency(Math.abs(differenceDisplay), displayCurrencyCode)}`;
+          }
+      }
+      budgetTableRows.push([
+          category.name,
+          formatCurrency(spentDisplay, displayCurrencyCode),
+          budgetDisplayStr,
+          status,
+      ]);
+  });
     
     if (budgetTableRows.length > 0) {
         doc.autoTable({

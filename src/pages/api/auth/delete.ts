@@ -23,7 +23,7 @@ async function deleteUser(req: NextApiRequest, res: NextApiResponse) {
     res.status(200).json({ message: "User deleted successfully." });
   } catch (error) {
     console.error("Error deleting user:", error);
-    res.status(500).json({ message: "Something went wrong.", error });
+    res.status(500).json({ message: "Something went wrong." });
   }
 }
 

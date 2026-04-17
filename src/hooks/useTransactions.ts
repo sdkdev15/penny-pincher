@@ -37,18 +37,21 @@ export function useTransactions() {
           headers: {
             "Content-Type": "application/json",
           },
-          credentials: "include", 
+          credentials: "include",
           body: JSON.stringify(transactionData),
         });
 
         if (!response.ok) {
-          throw new Error("Failed to add transaction.");
+          const errorData = await response.json().catch(() => ({ message: "Failed to add transaction." }));
+          throw new Error(errorData.message || "Failed to add transaction.");
         }
 
         const newTransaction: Transaction = await response.json();
         setTransactions((prev) => [newTransaction, ...prev]);
+        return newTransaction;
       } catch (error) {
         console.error(error);
+        throw error;
       }
     },
     []
@@ -56,27 +59,30 @@ export function useTransactions() {
 
   // Update an existing transaction via the API
   const updateTransaction = useCallback(
-    async (id: string, updates: Partial<Omit<Transaction, "id" | "createdAt">>) => {
+    async (id: number, updates: Partial<Omit<Transaction, "id" | "createdAt">>) => {
       try {
         const response = await fetch(`/api/process/transactions/${id}`, {
           method: "PUT",
           headers: {
             "Content-Type": "application/json",
           },
-          credentials: "include", // Include cookies in the request
+          credentials: "include",
           body: JSON.stringify(updates),
         });
 
         if (!response.ok) {
-          throw new Error("Failed to update transaction.");
+          const errorData = await response.json().catch(() => ({ message: "Failed to update transaction." }));
+          throw new Error(errorData.message || "Failed to update transaction.");
         }
 
         const updatedTransaction: Transaction = await response.json();
         setTransactions((prev) =>
           prev.map((t) => (t.id === id ? updatedTransaction : t))
         );
+        return updatedTransaction;
       } catch (error) {
         console.error(error);
+        throw error;
       }
     },
     []
@@ -84,20 +90,22 @@ export function useTransactions() {
 
   // Delete a transaction via the API
   const deleteTransaction = useCallback(
-    async (id: string) => {
+    async (id: number) => {
       try {
         const response = await fetch(`/api/process/transactions/${id}`, {
           method: "DELETE",
-          credentials: "include", // Include cookies in the request
+          credentials: "include",
         });
 
         if (!response.ok) {
-          throw new Error("Failed to delete transaction.");
+          const errorData = await response.json().catch(() => ({ message: "Failed to delete transaction." }));
+          throw new Error(errorData.message || "Failed to delete transaction.");
         }
 
         setTransactions((prev) => prev.filter((t) => t.id !== id));
       } catch (error) {
         console.error(error);
+        throw error;
       }
     },
     []
@@ -105,7 +113,7 @@ export function useTransactions() {
 
   // Get a transaction by ID
   const getTransactionById = useCallback(
-    (id: string) => {
+    (id: number) => {
       return transactions.find((t) => t.id === id);
     },
     [transactions]
@@ -113,7 +121,7 @@ export function useTransactions() {
 
   // Get transactions by category
   const getTransactionsByCategory = useCallback(
-    (categoryId: string) => {
+    (categoryId: number) => {
       return transactions.filter((t) => t.categoryId === categoryId);
     },
     [transactions]
@@ -145,7 +153,7 @@ export function useTransactions() {
 
   // Check if a category has transactions
   const hasTransactionsForCategory = useCallback(
-    (categoryId: string) => {
+    (categoryId: number) => {
       return transactions.some((t) => t.categoryId === categoryId);
     },
     [transactions]
@@ -159,6 +167,7 @@ export function useTransactions() {
   return {
     transactions,
     isLoading,
+    fetchTransactions,
     addTransaction,
     updateTransaction,
     deleteTransaction,

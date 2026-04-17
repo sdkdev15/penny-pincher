@@ -1,259 +1,370 @@
 "use client";
 
-import { useState } from "react";
-import Tesseract from "tesseract.js";
+import { useState, useRef } from "react";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Table } from "@/components/ui/table";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useToast } from "@/hooks/use-toast";
+import { Loader2, Camera, Upload, Save, ArrowLeft } from "lucide-react";
+
+interface ScannedItem {
+  name: string;
+  quantity: number;
+  unit_price: number;
+  total: number;
+}
+
+interface ScanResult {
+  merchant: string | null;
+  date: string | null;
+  total: number | null;
+  items: ScannedItem[];
+  raw_text: string;
+}
 
 export default function ScanReceiptPage() {
-  const [file, setFile] = useState<File | null>(null);
-  const [isScanning, setIsScanning] = useState(false);
-  const [scannedItems, setScannedItems] = useState<{ itemName: string; pieces: string; price: string; totalPrice: string }[]>([]);
-  const [transactionAmount, setTransactionAmount] = useState<string>("");
-  const [rawText, setRawText] = useState<string>("");
+  const router = useRouter();
   const { toast } = useToast();
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const [file, setFile] = useState<File | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string>("");
+  const [isScanning, setIsScanning] = useState(false);
+  const [scanResult, setScanResult] = useState<ScanResult | null>(null);
+  const [items, setItems] = useState<ScannedItem[]>([]);
+  const [totalAmount, setTotalAmount] = useState<string>("");
+  const [merchant, setMerchant] = useState<string>("");
+  const [showRawText, setShowRawText] = useState(false);
+  const [selectedCategoryId, setSelectedCategoryId] = useState<string>("1");
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (event.target.files && event.target.files[0]) {
-      setFile(event.target.files[0]);
+      const selectedFile = event.target.files[0];
+      setFile(selectedFile);
+      setPreviewUrl(URL.createObjectURL(selectedFile));
+      setScanResult(null);
+      setItems([]);
+      setTotalAmount("");
+      setMerchant("");
     }
-  };
-
-  const normalizeText = (text: string): string => {
-    return text
-      .replace(/\r\n|\r|\n/g, "\n")
-      .replace(/[^\x20-\x7E\n]+/g, "")
-      .replace(/ +/g, " ")
-      .trim();
-  };
-  const preprocessImage = async (file: File): Promise<HTMLCanvasElement> => {
-    return new Promise((resolve, reject) => {
-      const img = new Image();
-      const reader = new FileReader();
-
-      reader.onload = () => {
-        img.src = reader.result as string;
-      };
-      reader.onerror = reject;
-
-      img.onload = () => {
-        const canvas = document.createElement("canvas");
-        const ctx = canvas.getContext("2d")!;
-        const scale = 2; // Resize to improve resolution
-        canvas.width = img.width * scale;
-        canvas.height = img.height * scale;
-
-        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-
-        // Grayscale
-        const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-        for (let i = 0; i < imgData.data.length; i += 4) {
-          const avg = 0.3 * imgData.data[i] + 0.59 * imgData.data[i + 1] + 0.11 * imgData.data[i + 2];
-          imgData.data[i] = imgData.data[i + 1] = imgData.data[i + 2] = avg > 160 ? 255 : 0; // Binarize
-        }
-        ctx.putImageData(imgData, 0, 0);
-
-        resolve(canvas);
-      };
-      reader.readAsDataURL(file);
-    });
   };
 
   const handleScanReceipt = async () => {
     if (!file) {
-      toast({ title: "Error", description: "Please upload a receipt image.", variant: "destructive" });
+      toast({ title: "Error", description: "Please select a receipt image first.", variant: "destructive" });
       return;
     }
 
     setIsScanning(true);
-    try {
-      const canvas = await preprocessImage(file);
+    const formData = new FormData();
+    formData.append("file", file);
 
-      const { data } = await Tesseract.recognize(canvas, "eng+ind", {
-        logger: (info) => console.log(info),
-        tessedit_pageseg_mode: Tesseract.PSM.SINGLE_BLOCK, // or try PSM.SPARSE_TEXT
-        tessedit_char_whitelist: "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789.,:/()- ",
+    try {
+      const response = await fetch("/api/process/receipts/scan", {
+        method: "POST",
+        body: formData,
       });
 
-      let extractedText = normalizeText(data.text);
-      setRawText(extractedText);
-      // console.log("Normalized Text:\n", extractedText);
+      const result = await response.json();
 
-      const lines = extractedText.split("\n").map(line => line.trim()).filter(Boolean);
-
-      const itemRegex = /^(.+?)\s+(\d+)\s+([\d.,]+)\s+([\d.,]+)$/;
-      const totalBelanjaRegex = /total belanja/i;
-
-      let items: typeof scannedItems = [];
-      let totalBelanja = "";
-
-      for (let i = 0; i < lines.length; i++) {
-        const line = lines[i];
-
-        const match = line.match(itemRegex);
-        if (match) {
-          const [, itemName, pieces, price, totalPrice] = match;
-          items.push({
-            itemName: itemName.trim(),
-            pieces: pieces.trim(),
-            price: price.replace(/,/g, "").trim(),
-            totalPrice: totalPrice.replace(/,/g, "").trim(),
-          });
-          continue;
-        }
-
-        // Handle split item lines (name on one, qty/price on next)
-        if (
-          i + 1 < lines.length &&
-          /^\d+\s+[\d.,]+\s+[\d.,]+$/.test(lines[i + 1])
-        ) {
-          const name = line.trim();
-          const parts = lines[i + 1].trim().split(/\s+/);
-          if (parts.length === 3) {
-            const [pieces, price, totalPrice] = parts;
-            items.push({
-              itemName: name,
-              pieces,
-              price: price.replace(/,/g, ""),
-              totalPrice: totalPrice.replace(/,/g, ""),
-            });
-            i++;
-            continue;
-          }
-        }
-
-        // Detect total
-        if (totalBelanjaRegex.test(line)) {
-          const match = line.match(/([\d.,]+)$/);
-          if (match) {
-            totalBelanja = match[1].replace(/\./g, "").replace(/,/g, "").trim();
-          }
-        }
+      if (!result.success) {
+        throw new Error(result.error || "Failed to scan receipt");
       }
 
-      setScannedItems(items);
-      setTransactionAmount(totalBelanja);
+      setScanResult(result.data);
+      setMerchant(result.data.merchant || "");
+      setTotalAmount(result.data.total?.toString() || "");
+      setItems(result.data.items || []);
+
       toast({ title: "Success", description: "Receipt scanned successfully!" });
 
-    } catch (error) {
-      console.error("Error scanning receipt:", error);
-      toast({ title: "Error", description: "Failed to scan the receipt. Please try again.", variant: "destructive" });
+    } catch (error: any) {
+      toast({ title: "Error", description: error.message || "Failed to scan receipt", variant: "destructive" });
     } finally {
       setIsScanning(false);
     }
-    };
-
-
-  const handleSaveTransaction = () => {
-    console.log("Saving transaction:", { items: scannedItems, amount: transactionAmount });
-    toast({ title: "Success", description: "Transaction saved successfully!" });
-    setScannedItems([]);
-    setTransactionAmount("");
-    setRawText("");
-    setFile(null);
   };
 
-  const handleEditItem = (index: number, field: keyof typeof scannedItems[0], value: string) => {
-    setScannedItems((prev) =>
+  const handleSaveTransaction = async () => {
+    if (!totalAmount || parseFloat(totalAmount) <= 0) {
+      toast({ title: "Error", description: "Please enter a valid total amount.", variant: "destructive" });
+      return;
+    }
+
+    try {
+      const response = await fetch("/api/process/transactions", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          type: "expense",
+          amount: parseFloat(totalAmount),
+          categoryId: parseInt(selectedCategoryId) || 1,
+          date: scanResult?.date || new Date().toISOString(),
+          notes: merchant || "Receipt scan",
+          receiptData: scanResult,
+          scannedFromReceipt: true,
+        }),
+      });
+
+      if (response.ok) {
+        toast({ title: "Success", description: "Transaction saved!" });
+        router.push("/transactions");
+      } else {
+        const errorData = await response.json();
+        throw new Error(errorData.message || "Failed to save transaction");
+      }
+    } catch (error: any) {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    }
+  };
+
+  const handleEditItem = (index: number, field: keyof ScannedItem, value: string | number) => {
+    setItems((prev) =>
       prev.map((item, i) => (i === index ? { ...item, [field]: value } : item))
     );
   };
 
+  const handleDeleteItem = (index: number) => {
+    setItems((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const calculateTotal = () => {
+    return items.reduce((sum, item) => sum + (item.total || 0), 0).toFixed(2);
+  };
+
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat("id-ID", {
+      style: "currency",
+      currency: "IDR",
+      minimumFractionDigits: 0,
+    }).format(amount);
+  };
+
   return (
     <div className="flex min-h-screen bg-background p-4 gap-4">
-      {/* Left Column: Upload + Transactions */}
-      <div className="flex flex-col flex-1 gap-4">
+      <div className="flex flex-col flex-1 gap-4 max-w-4xl mx-auto w-full">
+        {/* Header */}
+        <div className="flex items-center gap-4">
+          <Button variant="ghost" size="icon" onClick={() => router.back()}>
+            <ArrowLeft className="h-5 w-5" />
+          </Button>
+          <h1 className="text-2xl font-bold">Scan Receipt</h1>
+        </div>
+
         {/* Upload Section */}
         <Card>
           <CardHeader>
-            <CardTitle className="text-xl font-bold">Upload or Take Photo of Receipt</CardTitle>
+            <CardTitle className="text-xl font-bold">Upload Receipt</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-200">
-                Choose a receipt image or take a new photo:
-              </label>
-              <Input
+            <div className="flex gap-4 items-center flex-wrap">
+              <input
+                ref={fileInputRef}
                 type="file"
                 accept="image/*"
                 capture="environment"
                 onChange={handleFileChange}
+                className="hidden"
               />
+              <Button
+                variant="outline"
+                onClick={() => fileInputRef.current?.click()}
+                className="flex items-center gap-2"
+              >
+                <Upload className="h-4 w-4" />
+                Choose Image
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => fileInputRef.current?.click()}
+                className="flex items-center gap-2"
+              >
+                <Camera className="h-4 w-4" />
+                Take Photo
+              </Button>
             </div>
-            <Button onClick={handleScanReceipt} disabled={isScanning || !file}>
-              {isScanning ? "Scanning..." : "Scan Receipt"}
+
+            {previewUrl && (
+              <div className="relative">
+                <img
+                  src={previewUrl}
+                  alt="Receipt preview"
+                  className="max-h-64 rounded-lg border object-contain mx-auto"
+                />
+              </div>
+            )}
+
+            <Button
+              onClick={handleScanReceipt}
+              disabled={isScanning || !file}
+              className="w-full"
+              size="lg"
+            >
+              {isScanning ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Scanning...
+                </>
+              ) : (
+                "Scan Receipt"
+              )}
             </Button>
           </CardContent>
         </Card>
 
-        {/* Mapped Transactions Section */}
-        {scannedItems.length > 0 && (
-          <Card className="flex-1 overflow-auto">
-            <CardHeader>
-              <CardTitle>Mapped Transactions</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <Table className="w-full border border-gray-300 dark:border-gray-700 rounded-lg overflow-hidden shadow-sm">
-                <thead className="bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 uppercase text-sm font-semibold">
-                  <tr>
-                    <th className="px-6 py-3 text-left">Item Name</th>
-                    <th className="px-6 py-3 text-left">Pieces</th>
-                    <th className="px-6 py-3 text-left">Price</th>
-                    <th className="px-6 py-3 text-left">Total Price</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-300 dark:divide-gray-700">
-                  {scannedItems.map((item, index) => (
-                    <tr key={index}>
-                      <td className="px-6 py-4">
-                        <Input value={item.itemName} onChange={(e) => handleEditItem(index, "itemName", e.target.value)} />
-                      </td>
-                      <td className="px-6 py-4">
-                        <Input value={item.pieces} onChange={(e) => handleEditItem(index, "pieces", e.target.value)} />
-                      </td>
-                      <td className="px-6 py-4">
-                        <Input value={item.price} onChange={(e) => handleEditItem(index, "price", e.target.value)} />
-                      </td>
-                      <td className="px-6 py-4">
-                        <Input value={item.totalPrice} onChange={(e) => handleEditItem(index, "totalPrice", e.target.value)} />
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </Table>
+        {/* Results Section */}
+        {scanResult && (
+          <>
+            {/* Merchant & Total */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Transaction Details</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div>
+                  <label className="text-sm font-medium">Merchant/Store</label>
+                  <Input
+                    value={merchant}
+                    onChange={(e) => setMerchant(e.target.value)}
+                    placeholder="Enter merchant name"
+                  />
+                </div>
+                <div>
+                  <label className="text-sm font-medium">Total Amount (Rp)</label>
+                  <Input
+                    type="number"
+                    value={totalAmount}
+                    onChange={(e) => setTotalAmount(e.target.value)}
+                    placeholder="Enter total amount"
+                    className="text-lg font-bold"
+                  />
+                  {totalAmount && (
+                    <p className="text-sm text-muted-foreground mt-1">
+                      {formatCurrency(parseFloat(totalAmount))}
+                    </p>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700">Transaction Amount</label>
-                <Input
-                  type="text"
-                  value={transactionAmount}
-                  onChange={(e) => setTransactionAmount(e.target.value)}
-                />
-              </div>
-              <Button onClick={handleSaveTransaction}>Save Transaction</Button>
-            </CardContent>
-          </Card>
+            {/* Items Table */}
+            {items.length > 0 && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center justify-between">
+                    <span>Items ({items.length})</span>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setShowRawText(!showRawText)}
+                    >
+                      {showRawText ? "Hide" : "Show"} Raw Text
+                    </Button>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="overflow-x-auto">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead className="w-[40%]">Item Name</TableHead>
+                          <TableHead className="w-20">Qty</TableHead>
+                          <TableHead className="w-28">Price</TableHead>
+                          <TableHead className="w-28">Total</TableHead>
+                          <TableHead className="w-10"></TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {items.map((item, index) => (
+                          <TableRow key={index}>
+                            <TableCell>
+                              <Input
+                                value={item.name}
+                                onChange={(e) =>
+                                  handleEditItem(index, "name", e.target.value)
+                                }
+                                placeholder="Item name"
+                              />
+                            </TableCell>
+                            <TableCell>
+                              <Input
+                                type="number"
+                                value={item.quantity}
+                                onChange={(e) =>
+                                  handleEditItem(index, "quantity", parseFloat(e.target.value) || 0)
+                                }
+                                className="w-16"
+                              />
+                            </TableCell>
+                            <TableCell>
+                              <Input
+                                type="number"
+                                value={item.unit_price}
+                                onChange={(e) =>
+                                  handleEditItem(index, "unit_price", parseFloat(e.target.value) || 0)
+                                }
+                                className="w-24"
+                              />
+                            </TableCell>
+                            <TableCell>
+                              <Input
+                                type="number"
+                                value={item.total}
+                                onChange={(e) =>
+                                  handleEditItem(index, "total", parseFloat(e.target.value) || 0)
+                                }
+                                className="w-24"
+                              />
+                            </TableCell>
+                            <TableCell>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => handleDeleteItem(index)}
+                                className="h-6 w-6"
+                              >
+                                ×
+                              </Button>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                  <div className="mt-4 text-right font-bold text-lg">
+                    Calculated Total: {formatCurrency(parseFloat(calculateTotal()))}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Raw OCR Text (optional) */}
+            {showRawText && scanResult.raw_text && (
+              <Card>
+                <CardHeader>
+                  <CardTitle>Raw OCR Text</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <Textarea
+                    value={scanResult.raw_text}
+                    readOnly
+                    className="h-48 font-mono text-sm bg-muted"
+                  />
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Save Button */}
+            <Button onClick={handleSaveTransaction} className="w-full" size="lg">
+              <Save className="h-4 w-4 mr-2" />
+              Save Transaction
+            </Button>
+          </>
         )}
       </div>
-
-      {/* Right Column: OCR Output */}
-      {rawText && (
-        <div className="w-1/3">
-          <Card className="h-full">
-            <CardHeader>
-              <CardTitle>OCR Output</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <Textarea value={rawText} readOnly className="h-[calc(100vh-200px)] resize-none bg-gray-100 dark:bg-gray-800" />
-            </CardContent>
-          </Card>
-        </div>
-      )}
     </div>
-
   );
 }
