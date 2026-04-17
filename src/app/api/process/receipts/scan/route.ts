@@ -66,6 +66,10 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    if (result.data && result.data.store_name && !result.data.merchant) {
+      result.data.merchant = result.data.store_name;
+    }
+
     return NextResponse.json({ success: true, data: result.data });
 
   } catch (error: any) {

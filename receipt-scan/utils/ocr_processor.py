@@ -136,7 +136,8 @@ def extract_text_easyocr(image_path: str) -> str:
         return ""
     
     try:
-        reader = easyocr.Reader(['en', 'id'], gpu=False)  # Use CPU for compatibility
+        use_gpu = os.getenv("USE_EASYOCR_GPU", "false").strip().lower() in ["1", "true", "yes"]
+        reader = easyocr.Reader(['en', 'id'], gpu=use_gpu)
         results = reader.readtext(image_path, detail=0)
         return '\n'.join(results)
     except Exception as e:
@@ -229,7 +230,7 @@ def score_ocr_result(text: str) -> float:
     # Known receipt keywords (Indonesian and English)
     keywords = [
         'total', 'subtotal', 'grand total', 'jumlah', 'qty', 'quantity',
-        'harga', 'rp', 'rpp', 'Rp', 'Rpp', 'tunai', 'cash', 'kembalian',
+        'harga', 'rp', 'rpp', 'tunai', 'cash', 'kembalian',
         'pajak', 'tax', 'disc', 'diskon', 'item', 'barang', 'transaksi',
         'tanggal', 'date', 'kasir', 'cashier', 'struk', 'receipt'
     ]
@@ -245,7 +246,7 @@ def score_ocr_result(text: str) -> float:
     price_patterns = [
         r'rp\s*\d{1,3}(?:\.\d{3})+',  # Rp 1.000.000
         r'rp\s*\d+',                   # Rp 1000
-        r'\d{1,3}(?:\.\d{3})+(?:,00?)?',  # 1.000.000 or 1.000.000,00
+        r'\d{1,3}(?:\.\d{3})+(?:,\d{1,2})?',  # 1.000.000 or 1.000.000,00
     ]
     
     for pattern in price_patterns:
@@ -258,19 +259,85 @@ def score_ocr_result(text: str) -> float:
     
     # Penalize for too many garbled characters
     if len(text) > 0:
-        # Check for excessive non-alphanumeric characters
         non_alpha = sum(1 for c in text if not c.isalnum() and c not in ' \n\t.,:;-')
         non_alpha_ratio = non_alpha / len(text)
         if non_alpha_ratio > 0.5:
             score -= 10  # Heavy penalty for garbled text
     
     # Bonus for having both item names and prices
-    has_items = bool(re.search(r'[a-zA-Z]{3,}', text))  # Has text words
-    has_prices = bool(re.search(r'\d', text))  # Has numbers
+    has_items = bool(re.search(r'[a-zA-Z]{3,}', text))
+    has_prices = bool(re.search(r'\d', text))
     if has_items and has_prices:
         score += 5
     
     return score
+
+
+def normalize_currency_value(value: str) -> Optional[float]:
+    value = value.strip()
+    if not value:
+        return None
+
+    # Keep only digits, separators, and decimal markers
+    cleaned = re.sub(r'[^0-9,\.]', '', value)
+
+    if cleaned.count('.') > 1 and cleaned.count(',') == 0:
+        cleaned = cleaned.replace('.', '')
+    elif cleaned.count(',') > 1 and cleaned.count('.') == 0:
+        cleaned = cleaned.replace(',', '')
+    elif '.' in cleaned and ',' in cleaned:
+        if cleaned.rfind(',') > cleaned.rfind('.'):
+            cleaned = cleaned.replace('.', '').replace(',', '.')
+        else:
+            cleaned = cleaned.replace(',', '')
+    elif ',' in cleaned and '.' not in cleaned:
+        cleaned = cleaned.replace(',', '.')
+
+    try:
+        return float(cleaned)
+    except ValueError:
+        return None
+
+
+def extract_item_from_line(line: str) -> Optional[Dict[str, Any]]:
+    skip_patterns = [
+        'terima kasih', 'thank', 'struk', 'receipt', 'jumlah barang',
+        'subtotal', 'total', 'grand total', 'jumlah:', 'tunai', 'cash',
+        'pajak', 'tax', 'no.', 'tanggal', 'date', 'kasir', 'cashier',
+        'www.', 'http', 'https', 'buka', 'menu', 'ppn', 'rincian'
+    ]
+    lowered = line.lower()
+    if any(skip in lowered for skip in skip_patterns):
+        return None
+
+    # Common item formats: name + price, or name + qty x price.
+    patterns = [
+        r'^(?P<name>.+?)\s+(?P<qty>\d+)\s*[xX]\s*[Rr]p?\s*(?P<price>\d{1,3}(?:[.,]\d{3})*)$',
+        r'^(?P<name>.+?)\s+(?P<price>\d{1,3}(?:[.,]\d{3})+)$',
+    ]
+
+    for pattern in patterns:
+        match = re.match(pattern, line, re.IGNORECASE)
+        if match:
+            name = match.group('name').strip()
+            price_raw = match.group('price')
+            price = normalize_currency_value(price_raw)
+            if price is None or not name or len(re.findall(r'[A-Za-z]', name)) < 2:
+                continue
+
+            qty = 1
+            if 'qty' in match.groupdict() and match.group('qty'):
+                qty = int(match.group('qty'))
+
+            return {
+                'name': name,
+                'quantity': qty,
+                'unit_price': price,
+                'total': round(price * qty, 2),
+                'raw': line,
+            }
+
+    return None
 
 
 def scan_receipt_simple(image_path: str) -> Dict[str, Any]:
@@ -387,14 +454,18 @@ def parse_receipt_data(text: str) -> Dict[str, Any]:
         r'[Tt]otal\s*[Bb]ayar\s*[:.\-]*\s*[Rr]p?\s*(\d{1,3}(?:[.,]\d{3})*)',
         r'[Gg]rand\s*[Tt]otal\s*[:.\-]*\s*[Rr]p?\s*(\d{1,3}(?:[.,]\d{3})*)',
         r'[Jj]umlah\s*[:.\-]*\s*[Rr]p?\s*(\d{1,3}(?:[.,]\d{3})*)',
-        r'(?:^|\n)\s*(\d{1,3}(?:[.,]\d{3}){2,})\s*(?:$|\n)',  # Standalone large number
+        r'[Ss]ubtotal\s*\(.*?\)\s*[:.\-]*\s*[Rr]p?\s*(\d{1,3}(?:[.,]\d{3})*)',
+        r'(?:^|\n)\s*(\d{1,3}(?:[.,]\d{3}){2,})\s*(?:$|\n)',
     ]
     
     for pattern in total_patterns:
         match = re.search(pattern, text, re.IGNORECASE)
         if match:
-            result['total'] = match.group(1).strip()
-            break
+            value = match.group(1).strip()
+            converted = normalize_currency_value(value)
+            if converted is not None:
+                result['total'] = converted
+                break
     
     # Look for subtotal
     subtotal_patterns = [
@@ -405,8 +476,11 @@ def parse_receipt_data(text: str) -> Dict[str, Any]:
     for pattern in subtotal_patterns:
         match = re.search(pattern, text, re.IGNORECASE)
         if match:
-            result['subtotal'] = match.group(1).strip()
-            break
+            value = match.group(1).strip()
+            converted = normalize_currency_value(value)
+            if converted is not None:
+                result['subtotal'] = converted
+                break
     
     # Look for tax/pajak
     tax_patterns = [
@@ -417,42 +491,23 @@ def parse_receipt_data(text: str) -> Dict[str, Any]:
     for pattern in tax_patterns:
         match = re.search(pattern, text, re.IGNORECASE)
         if match:
-            result['tax'] = match.group(1).strip()
-            break
-    
-    # Extract items with better pattern matching
-    # Look for lines with item name + quantity/price
-    item_patterns = [
-        r'([A-Za-z\s]+?)\s+(\d+)\s*[xX]\s*[Rr]p?\s*(\d{1,3}(?:[.,]\d{3})*)',  # Item 2 x Rp1000
-        r'([A-Za-z\s]+?)\s+(\d+)\s*([Kk][Gg]|[Pp][Aa][Cc][Kk]|[Bb][Uu][Hh])',  # Item 2 Pack
-        r'([A-Za-z\s]+?)\s+(\d{1,3}(?:[.,]\d{3})+)',  # Item 10.000
-    ]
+            value = match.group(1).strip()
+            converted = normalize_currency_value(value)
+            if converted is not None:
+                result['tax'] = converted
+                break
     
     for line in lines:
         line = line.strip()
-        if not line or len(line) < 3:
+        item = extract_item_from_line(line)
+        if item:
+            if item not in result['items']:
+                result['items'].append(item)
             continue
-        
-        # Skip header/footer lines
-        if any(skip in line.lower() for skip in ['terima kasih', 'thank', 'struk', 'receipt', '===', '----', 'www.']):
-            continue
-        
-        for pattern in item_patterns:
-            match = re.search(pattern, line, re.IGNORECASE)
-            if match:
-                groups = match.groups()
-                item = {
-                    'name': groups[0].strip(),
-                    'raw': line
-                }
-                if len(groups) > 1:
-                    item['quantity'] = groups[1].strip()
-                if len(groups) > 2:
-                    item['price'] = groups[2].strip()
-                
-                # Avoid duplicates
-                if item not in result['items']:
-                    result['items'].append(item)
-                break
     
+    if result['total'] is None and result['subtotal'] is not None:
+        result['total'] = result['subtotal']
+
+    result['merchant'] = result.get('store_name') or None
+
     return result

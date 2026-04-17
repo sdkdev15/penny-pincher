@@ -18,7 +18,8 @@ interface ScannedItem {
 }
 
 interface ScanResult {
-  merchant: string | null;
+  merchant?: string | null;
+  store_name?: string | null;
   date: string | null;
   total: number | null;
   items: ScannedItem[];
@@ -75,7 +76,7 @@ export default function ScanReceiptPage() {
       }
 
       setScanResult(result.data);
-      setMerchant(result.data.merchant || "");
+      setMerchant(result.data.merchant || result.data.store_name || "");
       setTotalAmount(result.data.total?.toString() || "");
       setItems(result.data.items || []);
 
