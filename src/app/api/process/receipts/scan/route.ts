@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/authOptions";
+import jwt from "jsonwebtoken";
 
 const RECEIPT_SCAN_SERVICE_URL = 
   process.env.RECEIPT_SCAN_SERVICE_URL || 
@@ -8,10 +7,25 @@ const RECEIPT_SCAN_SERVICE_URL =
     ? "http://receipt-scan:8000" 
     : "http://localhost:8000");
 
+// Auth check using the same JWT cookie as other API routes
+async function authenticate(request: NextRequest) {
+  const token = request.cookies.get("authToken")?.value;
+  if (!token) return null;
+  
+  const jwtSecret = process.env.JWT_SECRET;
+  if (!jwtSecret) return null;
+  
+  try {
+    return jwt.verify(token, jwtSecret) as { userId: number };
+  } catch {
+    return null;
+  }
+}
+
 export async function POST(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user) {
+    const user = await authenticate(request);
+    if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
