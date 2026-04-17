@@ -104,6 +104,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
             variant="ghost"
             onClick={logout}
             className="w-full justify-start text-sidebar-foreground hover:text-white"
+            title="Logout"
           >
             <LogOut className="mr-2 h-4 w-4" />
             Logout

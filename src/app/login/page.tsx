@@ -96,8 +96,8 @@ export default function LoginPage() {
       {/* Error Modal */}
       {isErrorModalOpen && (
         <Modal onClose={() => setIsErrorModalOpen(false)}>
-          <h2 className="text-xl font-bold mb-4 text-red-500">Error</h2>
-          <p className="text-gray-800 dark:text-gray-300">{errorMessage}</p>
+          <h2 className="text-xl font-bold mb-4 text-destructive">Error</h2>
+          <p className="text-muted-foreground">{errorMessage}</p>
           <div className="flex justify-end mt-4">
             <Button variant="ghost" onClick={() => setIsErrorModalOpen(false)}>
               Close

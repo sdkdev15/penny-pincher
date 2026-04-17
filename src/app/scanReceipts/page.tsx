@@ -37,7 +37,7 @@ export default function ScanReceiptPage() {
   const [items, setItems] = useState<ScannedItem[]>([]);
   const [totalAmount, setTotalAmount] = useState<string>("");
   const [merchant, setMerchant] = useState<string>("");
-  const [showRawText, setShowRawText] = useState(false);
+  const [showRawText, setShowRawText] = useState(true);
   const [selectedCategoryId, setSelectedCategoryId] = useState<string>("1");
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -144,14 +144,14 @@ export default function ScanReceiptPage() {
   };
 
   return (
-    <div className="flex min-h-screen bg-background p-4 gap-4">
+    <div className="min-h-screen bg-background p-4">
       <div className="flex flex-col flex-1 gap-4 max-w-4xl mx-auto w-full">
         {/* Header */}
-        <div className="flex items-center gap-4">
+        <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
           <Button variant="ghost" size="icon" onClick={() => router.back()}>
             <ArrowLeft className="h-5 w-5" />
           </Button>
-          <h1 className="text-2xl font-bold">Scan Receipt</h1>
+          <h1 className="text-xl sm:text-2xl font-bold">Scan Receipt</h1>
         </div>
 
         {/* Upload Section */}
@@ -160,7 +160,7 @@ export default function ScanReceiptPage() {
             <CardTitle className="text-xl font-bold">Upload Receipt</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="flex gap-4 items-center flex-wrap">
+            <div className="flex flex-col sm:flex-row gap-2 sm:gap-4 items-stretch sm:items-center w-full">
               <input
                 ref={fileInputRef}
                 type="file"
@@ -172,7 +172,7 @@ export default function ScanReceiptPage() {
               <Button
                 variant="outline"
                 onClick={() => fileInputRef.current?.click()}
-                className="flex items-center gap-2"
+                className="flex items-center justify-center gap-2 w-full sm:w-auto min-h-[44px]"
               >
                 <Upload className="h-4 w-4" />
                 Choose Image
@@ -180,7 +180,7 @@ export default function ScanReceiptPage() {
               <Button
                 variant="outline"
                 onClick={() => fileInputRef.current?.click()}
-                className="flex items-center gap-2"
+                className="flex items-center justify-center gap-2 w-full sm:w-auto min-h-[44px]"
               >
                 <Camera className="h-4 w-4" />
                 Take Photo
@@ -192,7 +192,7 @@ export default function ScanReceiptPage() {
                 <img
                   src={previewUrl}
                   alt="Receipt preview"
-                  className="max-h-64 rounded-lg border object-contain mx-auto"
+                  className="max-h-48 sm:max-h-64 max-w-full rounded-lg border object-contain mx-auto"
                 />
               </div>
             )}
@@ -266,15 +266,15 @@ export default function ScanReceiptPage() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="overflow-x-auto">
-                    <Table>
+                  <div className="overflow-x-auto -mx-4 sm:mx-0">
+                    <Table className="min-w-[600px]">
                       <TableHeader>
                         <TableRow>
-                          <TableHead className="w-[40%]">Item Name</TableHead>
-                          <TableHead className="w-20">Qty</TableHead>
-                          <TableHead className="w-28">Price</TableHead>
-                          <TableHead className="w-28">Total</TableHead>
-                          <TableHead className="w-10"></TableHead>
+                          <TableHead className="w-[40%] px-2 text-xs sm:text-sm">Item Name</TableHead>
+                          <TableHead className="w-16 px-2 text-xs sm:text-sm">Qty</TableHead>
+                          <TableHead className="w-24 px-2 text-xs sm:text-sm">Price</TableHead>
+                          <TableHead className="w-24 px-2 text-xs sm:text-sm">Total</TableHead>
+                          <TableHead className="w-10 px-2"></TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
@@ -358,7 +358,7 @@ export default function ScanReceiptPage() {
             )}
 
             {/* Save Button */}
-            <Button onClick={handleSaveTransaction} className="w-full" size="lg">
+            <Button onClick={handleSaveTransaction} className="w-full min-h-[48px] text-base" size="lg">
               <Save className="h-4 w-4 mr-2" />
               Save Transaction
             </Button>

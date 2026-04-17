@@ -266,6 +266,37 @@ docker-compose -f dev-compose.yaml up -d
 docker-compose up -d
 ```
 
+**Run migration:**
+   ```bash
+   docker-compose exec -T nodeapp npx prisma migrate deploy
+   ```
+
+**Seed Data:**
+
+1. **Seed Admin User (wajib pertama kali):**
+   ```bash
+   docker cp scripts/seed-admin.ts penny:/app/scripts/seed-admin.ts
+   docker exec penny npx tsx /app/scripts/seed-admin.ts
+   ```
+
+2. **Seed Default Categories (setelah admin dibuat):**
+   ```bash
+   docker cp scripts/seed-categories.ts penny:/app/scripts/seed-categories.ts
+   docker exec penny npx tsx /app/scripts/seed-categories.ts
+   ```
+   
+   Default categories:
+   | Kategori | Budget |
+   |----------|--------|
+   | Transportation | 1,000,000 |
+   | Grocery | 2,000,000 |
+   | Food & Entertainment | 1,500,000 |
+   | Utilities | 500,000 |
+   | Internet & Phone | 300,000 |
+   | Healthcare | 300,000 |
+   | Shopping | 500,000 |
+   | Education | 200,000 |
+   | Savings | 3,700,000 |
 ---
 
 ## Receipt Scanning Service

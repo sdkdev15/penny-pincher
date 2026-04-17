@@ -485,8 +485,8 @@ export function TransactionListClient({ refreshKey }: { refreshKey: number }) {
                           variant={transaction.type === "income" ? "default" : "destructive"}
                           className={cn(
                             transaction.type === "income"
-                              ? "bg-green-500/20 text-green-700 border-green-500/30 hover:bg-green-500/30"
-                              : "bg-red-500/20 text-red-700 border-red-500/30 hover:bg-red-500/30",
+                              ? "bg-primary/10 text-primary border-primary/30 hover:bg-primary/15"
+                              : "bg-destructive/10 text-destructive border-destructive/30 hover:bg-destructive/15",
                             "capitalize"
                           )}
                         >
@@ -495,7 +495,7 @@ export function TransactionListClient({ refreshKey }: { refreshKey: number }) {
                       </TableCell>
                       <TableCell
                         className={`p-4 max-sm:p-2 text-right font-medium ${
-                          transaction.type === "income" ? "text-green-600" : "text-red-600"
+                          transaction.type === "income" ? "text-primary" : "text-destructive"
                         }`}
                       >
                         {transaction.type === "income" ? "+" : "-"}
@@ -524,7 +524,7 @@ export function TransactionListClient({ refreshKey }: { refreshKey: number }) {
                               <DropdownMenuSeparator />
                               <DropdownMenuItem
                                 onClick={() => handleDelete(transaction.id)}
-                                className="text-red-600 focus:text-red-600 focus:bg-red-100"
+                                className="text-destructive focus:text-destructive focus:bg-destructive/10"
                               >
                                 <Trash2 className="mr-2 h-4 w-4" /> Delete
                               </DropdownMenuItem>

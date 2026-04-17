@@ -161,7 +161,7 @@ export function ReportsClient() {
           <CardTitle>Report Filters</CardTitle>
           <CardDescription>Select a time period to view your financial data (shown in {displayCurrencyCode}).</CardDescription>
         </CardHeader>
-        <CardContent className="flex flex-col sm:flex-row gap-4 items-center">
+        <CardContent className="flex flex-col sm:flex-row gap-3 sm:gap-4 p-3 sm:p-4 items-center">
           <Select value={timePeriod} onValueChange={handleTimePeriodChange}>
             <SelectTrigger className="w-full sm:w-[180px]">
               <SelectValue placeholder="Select period" />
@@ -235,17 +235,17 @@ export function ReportsClient() {
 
 
       {!noDataForCharts && (
-        <div className="grid md:grid-cols-2 gap-6">
+        <div className="grid gap-6 sm:grid-cols-2">
           <Card className="shadow-md">
             <CardHeader>
               <CardTitle>Expenses by Category</CardTitle>
               <CardDescription>Breakdown of your expenses for the selected period (in {displayCurrencyCode}).</CardDescription>
             </CardHeader>
-            <CardContent className="h-[350px]">
+            <CardContent className="h-[280px] sm:h-[350px]">
             {expensesByCategory.length > 0 ? (
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
-                  <Pie data={expensesByCategory} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={100} label>
+                  <Pie data={expensesByCategory} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius="70%" label>
                     {expensesByCategory.map((entry, index) => (
                       <Cell key={`cell-${index}`} fill={CHART_COLORS[index % CHART_COLORS.length]} />
                     ))}
@@ -265,10 +265,10 @@ export function ReportsClient() {
               <CardTitle>Income vs. Expenses</CardTitle>
               <CardDescription>Comparison of total income and expenses for the selected period (in {displayCurrencyCode}).</CardDescription>
             </CardHeader>
-            <CardContent className="h-[350px]">
+            <CardContent className="h-[280px] sm:h-[350px]">
             {incomeVsExpenses.some(d => d.value > 0) ? (
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={incomeVsExpenses} layout="vertical" margin={{ left: 20, right: 20}}>
+                <BarChart data={incomeVsExpenses} layout="vertical" margin={{ left: 10, right: 10, top: 10, bottom: 10 }}>
                   <XAxis type="number" tickFormatter={currencyTickFormatter} />
                   <YAxis type="category" dataKey="name" width={100} />
                   <Tooltip formatter={(value: number) => currencyTickFormatter(value)} />

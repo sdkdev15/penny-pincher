@@ -136,7 +136,7 @@ const handleDelete = (category: Category) => {
             <PlusCircle className="mr-2 h-4 w-4" /> Add New Category
           </Button>
         </DialogTrigger>
-        <DialogContent className="sm:max-w-[425px]">
+        <DialogContent className="sm:max-w-[425px] max-w-[95vw]">
           <DialogHeader>
             <DialogTitle>{editingCategory ? "Edit Category" : "Add New Category"}</DialogTitle>
             <DialogDescription>
@@ -199,10 +199,10 @@ const handleDelete = (category: Category) => {
               <Table className="table-auto min-w-full max-sm:text-xs">
                 <TableHeader>
                   <TableRow>
-                    <TableHead className="px-4 max-sm:px-2">Name</TableHead>
-                    <TableHead className="px-4 max-sm:px-2">Budget ({displayCurrencyCode})</TableHead>
-                    <TableHead className="px-4 max-sm:px-2">Type</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
+                    <TableHead className="min-w-[100px] px-2 sm:px-4">Name</TableHead>
+                    <TableHead className="min-w-[80px] px-2 sm:px-4">Budget ({displayCurrencyCode})</TableHead>
+                    <TableHead className="min-w-[60px] px-2 sm:px-4 hidden sm:table-cell">Type</TableHead>
+                    <TableHead className="text-right min-w-[100px] px-2 sm:px-4">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -210,31 +210,31 @@ const handleDelete = (category: Category) => {
                     const budgetInDisplayCurrency = category.budget ? convertAmount(category.budget, displayCurrencyCode) : undefined;
                     return (
                       <TableRow key={category.id}>
-                        <TableCell className="p-4 max-sm:p-2 font-medium">{category.name}</TableCell>
-                        <TableCell className="p-4 max-sm:p-2">
+                        <TableCell className="px-2 sm:px-4 py-2 sm:py-3 font-medium text-xs sm:text-sm">{category.name}</TableCell>
+                        <TableCell className="px-2 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm">
                           {budgetInDisplayCurrency ? formatCurrency(budgetInDisplayCurrency, displayCurrencyCode) : <span className="text-muted-foreground">-</span>}
                         </TableCell>
-                        <TableCell>
+                        <TableCell className="hidden sm:table-cell px-2 sm:px-4 py-2 sm:py-3">
                           {category.isDefault ? (
-                            <span className="p-4 max-sm:p-2 text-xs text-muted-foreground py-1 px-2 rounded-full bg-muted">Default</span>
+                            <span className="text-xs text-muted-foreground py-1 px-2 rounded-full bg-muted">Default</span>
                           ) : (
-                            <span className="p-4 max-sm:p-2 text-xs text-muted-foreground py-1 px-2 rounded-full bg-secondary">Custom</span>
+                            <span className="text-xs text-muted-foreground py-1 px-2 rounded-full bg-secondary">Custom</span>
                           )}
                         </TableCell>
-                        <TableCell className="p-4 max-sm:p-2 text-right max-sm:text-middle">
-                          <Button variant="ghost" size="icon" onClick={() => handleEdit(category)} className="text-blue-600 hover:text-blue-700">
+                        <TableCell className="px-2 sm:px-4 py-2 sm:py-3 text-right">
+                          <Button variant="ghost" size="icon" onClick={() => handleEdit(category)} className="text-primary hover:text-primary/90">
                             <Edit className="h-4 w-4" />
                             <span className="sr-only">Edit</span>
                           </Button>
                           {!category.isDefault && (
                              <Dialog>
                               <DialogTrigger asChild>
-                                 <Button variant="ghost" size="icon" className="text-red-600 hover:text-red-700">
+                                 <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive/90">
                                   <Trash2 className="h-4 w-4" />
                                   <span className="sr-only">Delete</span>
                                 </Button>
                               </DialogTrigger>
-                              <DialogContent>
+                              <DialogContent className="max-w-[95vw]">
                                 <DialogHeader>
                                   <DialogTitle className="flex items-center">
                                     <AlertTriangle className="h-5 w-5 mr-2 text-destructive" /> Are you sure?

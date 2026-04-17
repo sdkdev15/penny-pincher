@@ -1,4 +1,3 @@
-
 "use client";
 
 import Link from 'next/link';
@@ -30,7 +29,7 @@ export function RecentTransactionsTable({ transactions }: RecentTransactionsTabl
         </CardHeader>
         <CardContent>
           <p className="text-muted-foreground text-center py-4">Start by adding a new transaction!</p>
-           <div className="text-center mt-4">
+          <div className="text-center mt-4">
             <Button asChild>
               <Link href="/transactions">Add Transaction</Link>
             </Button>
@@ -39,58 +38,69 @@ export function RecentTransactionsTable({ transactions }: RecentTransactionsTabl
       </Card>
     );
   }
-  
+
   const displayedTransactions = transactions.slice(0, 5);
 
   return (
     <Card className="shadow-md">
-      <CardHeader className="px-7">
+      <CardHeader className="px-4 sm:px-7">
         <CardTitle>Recent Transactions</CardTitle>
         <CardDescription>Your latest financial activities.</CardDescription>
       </CardHeader>
       <CardContent>
-        <ScrollArea className="h-[300px]">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Date</TableHead>
-                <TableHead>Category</TableHead>
-                <TableHead className="hidden sm:table-cell">Type</TableHead>
-                <TableHead className="text-right">Amount</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {displayedTransactions.map((transaction) => {
-                const amountInDisplayCurrency = convertAmount(transaction.amount, displayCurrencyCode);
-                const formattedAmount = formatCurrency(amountInDisplayCurrency, displayCurrencyCode);
-                return (
-                  <TableRow key={transaction.id}>
-                    <TableCell>
-                      <div className="font-medium">{format(new Date(transaction.date), 'MMM dd, yyyy')}</div>
-                    </TableCell>
-                    <TableCell>
-                       {getCategoryNameById(transaction.categoryId)}
-                    </TableCell>
-                    <TableCell className="hidden sm:table-cell">
-                      <Badge variant={transaction.type === 'income' ? 'default' : 'destructive'} 
-                             className={cn(transaction.type === 'income' ? 'bg-green-500/20 text-green-700 border-green-500/30 hover:bg-green-500/30' : 'bg-red-500/20 text-red-700 border-red-500/30 hover:bg-red-500/30', 'capitalize')}>
-                        {transaction.type}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className={`text-right font-medium ${transaction.type === 'income' ? 'text-green-600' : 'text-red-600'}`}>
-                      {transaction.type === 'income' ? '+' : '-'}{formattedAmount.replace(/^[^\d.,]+/, '')}
-                    </TableCell>
+        <div className="overflow-x-auto -mx-4 sm:mx-0 rounded-lg">
+          <div className="inline-block min-w-full px-4 sm:px-0">
+            <ScrollArea className="h-[300px]">
+              <Table>
+                <TableHeader className="sticky top-0 bg-background z-10">
+                  <TableRow>
+                    <TableHead className="text-xs sm:text-sm py-2 px-2 sm:py-3 sm:px-4">Date</TableHead>
+                    <TableHead className="text-xs sm:text-sm py-2 px-2 sm:py-3 sm:px-4">Category</TableHead>
+                    <TableHead className="hidden md:table-cell text-xs sm:text-sm py-2 px-2 sm:py-3 sm:px-4">Type</TableHead>
+                    <TableHead className="text-right text-xs sm:text-sm py-2 px-2 sm:py-3 sm:px-4">Amount</TableHead>
                   </TableRow>
-                );
-              })}
-            </TableBody>
-          </Table>
-        </ScrollArea>
-         <div className="text-center mt-6">
-            <Button asChild variant="outline">
-              <Link href="/transactions">View All Transactions</Link>
-            </Button>
+                </TableHeader>
+                <TableBody>
+                  {displayedTransactions.map((transaction) => {
+                    const amountInDisplayCurrency = convertAmount(transaction.amount, displayCurrencyCode);
+                    const formattedAmount = formatCurrency(amountInDisplayCurrency, displayCurrencyCode);
+                    return (
+                      <TableRow key={transaction.id}>
+                        <TableCell className="py-2 px-2 sm:py-3 sm:px-4">
+                          <div className="text-xs sm:text-sm font-medium">{format(new Date(transaction.date), 'MMM dd, yyyy')}</div>
+                        </TableCell>
+                        <TableCell className="py-2 px-2 sm:py-3 sm:px-4">
+                          <span className="text-xs sm:text-sm">{getCategoryNameById(transaction.categoryId)}</span>
+                        </TableCell>
+                        <TableCell className="hidden md:table-cell py-2 px-2 sm:py-3 sm:px-4">
+                          <Badge 
+                            variant={transaction.type === 'income' ? 'default' : 'destructive'} 
+                            className={cn(
+                              transaction.type === 'income' 
+                                ? 'bg-primary/10 text-primary border-primary/30 hover:bg-primary/15' 
+                                : 'bg-destructive/10 text-destructive border-destructive/30 hover:bg-destructive/15', 
+                              'capitalize text-xs'
+                            )}
+                          >
+                            {transaction.type}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className={`text-right font-medium text-xs sm:text-sm py-2 px-2 sm:py-3 sm:px-4 ${transaction.type === 'income' ? 'text-primary' : 'text-destructive'}`}>
+                          {transaction.type === 'income' ? '+' : '-'}{formattedAmount.replace(/^[^\d.,]+/, '')}
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+            </ScrollArea>
           </div>
+        </div>
+        <div className="text-center mt-6">
+          <Button asChild variant="outline">
+            <Link href="/transactions">View All Transactions</Link>
+          </Button>
+        </div>
       </CardContent>
     </Card>
   );

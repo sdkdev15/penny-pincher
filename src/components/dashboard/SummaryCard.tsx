@@ -32,13 +32,13 @@ export function SummaryCard({
   return (
     <Card className="shadow-md hover:shadow-lg transition-shadow duration-300">
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-        <CardTitle className="text-sm font-medium text-muted-foreground">
+        <CardTitle className="text-xs sm:text-sm font-medium text-muted-foreground">
           {title}
         </CardTitle>
-        <Icon className={`h-5 w-5 ${colorClass}`} />
+        <Icon className={`h-4 w-4 sm:h-5 sm:w-5 ${colorClass}`} />
       </CardHeader>
       <CardContent>
-        <div className={`text-2xl font-bold ${colorClass}`}>{formattedValue}</div>
+        <div className={`text-lg sm:text-2xl font-bold ${colorClass}`}>{formattedValue}</div>
       </CardContent>
     </Card>
   );

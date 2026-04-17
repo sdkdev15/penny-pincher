@@ -40,11 +40,11 @@ export default function DashboardPage() {
           data-ai-hint="piggy bank illustration"
           priority
         />
-        <h1 className="text-4xl font-bold text-primary mb-4">Welcome to PennyPincher!</h1>
-        <p className="text-lg text-muted-foreground mb-8 max-w-md">
+        <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-primary mb-4">Welcome to PennyPincher!</h1>
+        <p className="text-base sm:text-lg text-muted-foreground mb-6 sm:mb-8 max-w-md px-2">
           Start managing your finances by adding your first transaction. It's quick and easy!
         </p>
-        <Button asChild size="lg">
+        <Button asChild size="lg" className="min-h-[48px] px-6">
           <Link href="/transactions">Add Your First Transaction</Link>
         </Button>
       </div>
@@ -54,7 +54,7 @@ export default function DashboardPage() {
   // Show the dashboard with data
   return (
     <div className="space-y-6">
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-3 sm:gap-4 grid-cols-2 md:grid-cols-2 lg:grid-cols-4">
         <SummaryCard
           title="Current Balance"
           value={currentBalance}

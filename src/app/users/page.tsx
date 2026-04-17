@@ -156,27 +156,28 @@ export default function UserManagementPage() {
 
   return (
     <ToastProvider>
-      <div className="rounded-md space-y-6 bg-white text-gray-900 dark:bg-gray-900 dark:text-white p-6">
-        <div className="flex justify-between items-center">
-          <h1 className="text-2xl font-bold">User Management</h1>
-          <Button onClick={() => setIsModalOpen(true)}>Add User</Button>
+      <div className="rounded-md space-y-6 bg-card text-card-foreground p-4 sm:p-6 shadow-sm">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+          <h1 className="text-xl sm:text-2xl font-bold">User Management</h1>
+          <Button onClick={() => setIsModalOpen(true)} className="w-full sm:w-auto min-h-[44px]">Add User</Button>
         </div>
 
-        <Table className="w-full border border-gray-300 dark:border-gray-700 rounded-lg overflow-hidden shadow-sm">
-          <thead className="bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 uppercase text-sm font-semibold">
-            <tr>
-              <th className="px-6 py-3 text-left">Username</th>
-              <th className="px-6 py-3 text-left">Role</th>
-              <th className="px-6 py-3 text-left">Actions</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-gray-300 dark:divide-gray-700">
+        <div className="overflow-x-auto -mx-4 sm:mx-0">
+          <Table className="w-full min-w-[400px] border border-border rounded-lg overflow-hidden shadow-sm">
+            <thead className="bg-muted text-muted-foreground uppercase text-xs sm:text-sm font-semibold">
+              <tr>
+                <th className="px-3 sm:px-6 py-3 text-left">Username</th>
+                <th className="px-3 sm:px-6 py-3 text-left">Role</th>
+                <th className="px-3 sm:px-6 py-3 text-left">Actions</th>
+              </tr>
+            </thead>
+          <tbody className="divide-y divide-border">
             {users.map((user) => (
               <tr
                 key={user.id}
-                className="hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-200"
+                className="hover:bg-muted/75 transition-colors duration-200"
               >
-                <td className="px-6 py-4 text-gray-800 dark:text-gray-300">{user.username}</td>
+                <td className="px-6 py-4 text-foreground">{user.username}</td>
                 <td className="px-6 py-4">
                   {user.isAdmin ? (
                     <Badge variant="success">Admin</Badge>
@@ -211,11 +212,12 @@ export default function UserManagementPage() {
             ))}
           </tbody>
         </Table>
+        </div>
 
         {/* Add User Modal */}
         {isModalOpen && (
           <Modal onClose={() => setIsModalOpen(false)}>
-            <h2 className="text-xl font-bold mb-4 text-gray-900 dark:text-dark">Add New User</h2>
+            <h2 className="text-xl font-bold mb-4">Add New User</h2>
             <div className="space-y-4">
               <Input
                 placeholder="Username"
@@ -228,7 +230,7 @@ export default function UserManagementPage() {
                 value={newUser.password}
                 onChange={(e) => setNewUser({ ...newUser, password: e.target.value })}
               />
-              <label className="flex items-center space-x-2 text-gray-900 dark:text-dark">
+              <label className="flex items-center space-x-2 text-foreground">
                 <input
                   type="checkbox"
                   checked={newUser.isAdmin}
@@ -236,7 +238,7 @@ export default function UserManagementPage() {
                 />
                 <span>Admin</span>
               </label>
-              <div className="flex justify-end space-x-4 pt-2 text-gray-900 dark:text-dark">
+              <div className="flex justify-end space-x-4 pt-2 text-foreground">
                 <Button variant="ghost" onClick={() => setIsModalOpen(false)}>
                   Cancel
                 </Button>
@@ -251,11 +253,11 @@ export default function UserManagementPage() {
         {/* Delete Confirmation Modal */}
         {isDeleteModalOpen && userToDelete && (
           <Modal onClose={() => setIsDeleteModalOpen(false)}>
-            <h2 className="text-xl font-bold mb-4 text-gray-900 dark:text-dark">Confirm Deletion</h2>
-            <p className="text-gray-800 dark:text-gray">
+            <h2 className="text-xl font-bold mb-4">Confirm Deletion</h2>
+            <p className="text-muted-foreground">
               Are you sure you want to delete the user "{userToDelete.username}"?
             </p>
-            <div className="flex justify-end space-x-4 mt-4 text-gray-900 dark:text-dark">
+            <div className="flex justify-end space-x-4 mt-4 text-foreground">
               <Button variant="ghost" onClick={() => setIsDeleteModalOpen(false)}>
                 Cancel
               </Button>
@@ -269,7 +271,7 @@ export default function UserManagementPage() {
         {/* Change Password Modal */}
         {isChangePasswordModalOpen && userToChangePassword && (
           <Modal onClose={() => setIsChangePasswordModalOpen(false)}>
-            <h2 className="text-xl font-bold mb-4 text-gray-900 dark:text-dark">
+            <h2 className="text-xl font-bold mb-4">
               Change Password for "{userToChangePassword.username}"
             </h2>
             <Input
@@ -278,7 +280,7 @@ export default function UserManagementPage() {
               value={newPassword}
               onChange={(e) => setNewPassword(e.target.value)}
             />
-            <div className="flex justify-end space-x-4 pt-4 text-gray-900 dark:text-dark">
+            <div className="flex justify-end space-x-4 pt-4 text-foreground">
               <Button variant="ghost" onClick={() => setIsChangePasswordModalOpen(false)}>
                 Cancel
               </Button>

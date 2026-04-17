@@ -149,7 +149,7 @@ export function TransactionForm({ transactionToEdit, onFormSubmit }: Transaction
                       <RadioGroup
                         onValueChange={field.onChange}
                         defaultValue={field.value}
-                        className="flex space-x-4"
+                        className="flex flex-col sm:flex-row gap-3 sm:gap-4"
                       >
                         <FormItem className="flex items-center space-x-2 space-y-0">
                           <FormControl>
@@ -242,7 +242,7 @@ export function TransactionForm({ transactionToEdit, onFormSubmit }: Transaction
                           </Button>
                         </FormControl>
                       </PopoverTrigger>
-                      <PopoverContent className="w-auto p-0" align="start">
+                      <PopoverContent className="w-auto max-w-[320px] p-0 overflow-hidden" align="start">
                         <Calendar
                           mode="single"
                           selected={field.value}
@@ -273,7 +273,7 @@ export function TransactionForm({ transactionToEdit, onFormSubmit }: Transaction
                 </FormItem>
               )}
             />
-            <Button type="submit" className="w-full md:w-auto" disabled={form.formState.isSubmitting}>
+            <Button type="submit" className="w-full min-h-[44px] md:min-h-[auto] md:w-auto" disabled={form.formState.isSubmitting}>
               {form.formState.isSubmitting ? (transactionToEdit ? "Saving..." : "Adding...") : (transactionToEdit ? "Save Changes" : "Add Transaction")}
             </Button>
           </form>
