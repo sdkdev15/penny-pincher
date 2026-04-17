@@ -31,10 +31,11 @@ services:
       - "8000:8000"
     environment:
       - PYTHONUNBUFFERED=1
-    deploy:
-      resources:
-        limits:
-          memory: 2G
+      - USE_EASYOCR_GPU=true
+    device_requests:
+      - driver: nvidia
+        count: all
+        capabilities: [gpu]
 
 volumes:
   pgdata:
