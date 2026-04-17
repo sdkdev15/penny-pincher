@@ -285,18 +285,22 @@ docker-compose up -d
    docker exec penny npx tsx /app/scripts/seed-categories.ts
    ```
    
-   Default categories:
+   Default categories (13 categories):
    | Kategori | Budget |
    |----------|--------|
-   | Transportation | 1,000,000 |
-   | Grocery | 2,000,000 |
-   | Food & Entertainment | 1,500,000 |
-   | Utilities | 500,000 |
-   | Internet & Phone | 300,000 |
-   | Healthcare | 300,000 |
-   | Shopping | 500,000 |
-   | Education | 200,000 |
-   | Savings | 3,700,000 |
+   | Salary | - |
+   | Food & Groceries | 3,000,000 |
+   | Rent/Mortgage | - |
+   | Utilities | 150,000 |
+   | Transportation | 400,000 |
+   | Entertainment | 500,000 |
+   | Healthcare | - |
+   | Education | - |
+   | Shopping | 350,000 |
+   | Gifts/Donations | - |
+   | Freelance Income | - |
+   | Investments | - |
+   | Miscellaneous | - |
 ---
 
 ## Receipt Scanning Service

@@ -2,6 +2,29 @@ import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
+interface DefaultCategory {
+  name: string;
+  isDefault: boolean;
+  budget?: number;
+}
+
+// Default categories
+const DEFAULT_CATEGORIES: DefaultCategory[] = [
+  { name: "Salary", isDefault: true },
+  { name: "Food & Groceries", isDefault: true, budget: 3000000 },
+  { name: "Rent/Mortgage", isDefault: true },
+  { name: "Utilities", isDefault: true, budget: 150000 },
+  { name: "Transportation", isDefault: true, budget: 400000 },
+  { name: "Entertainment", isDefault: true, budget: 500000 },
+  { name: "Healthcare", isDefault: true },
+  { name: "Education", isDefault: true },
+  { name: "Shopping", isDefault: true, budget: 350000 },
+  { name: "Gifts/Donations", isDefault: true },
+  { name: "Freelance Income", isDefault: true },
+  { name: "Investments", isDefault: true },
+  { name: "Miscellaneous", isDefault: true },
+];
+
 async function main() {
   const DEFAULT_ADMIN_USERNAME = "admin";
 
@@ -27,23 +50,12 @@ async function main() {
     return;
   }
 
-  // Default categories for Jakarta (budget in IDR)
-  const defaultCategories = [
-    { name: "Transportation", budget: 1000000, isDefault: true },
-    { name: "Grocery", budget: 2000000, isDefault: true },
-    { name: "Food & Entertainment", budget: 1500000, isDefault: true },
-    { name: "Utilities", budget: 500000, isDefault: true },
-    { name: "Internet & Phone", budget: 300000, isDefault: true },
-    { name: "Healthcare", budget: 300000, isDefault: true },
-    { name: "Shopping", budget: 500000, isDefault: true },
-    { name: "Education", budget: 200000, isDefault: true },
-    { name: "Savings", budget: 3700000, isDefault: true },
-  ];
-
-  // Create categories
+  // Create categories from DEFAULT_CATEGORIES
   const created = await prisma.category.createMany({
-    data: defaultCategories.map((cat) => ({
-      ...cat,
+    data: DEFAULT_CATEGORIES.map((cat) => ({
+      name: cat.name,
+      budget: cat.budget ?? null,
+      isDefault: cat.isDefault,
       userId: adminUser.id,
     })),
   });
@@ -51,7 +63,7 @@ async function main() {
   console.log(`Created ${created.count} default categories for user "${DEFAULT_ADMIN_USERNAME}"`);
 
   // Calculate total budget
-  const totalBudget = defaultCategories.reduce((sum, cat) => sum + cat.budget, 0);
+  const totalBudget = DEFAULT_CATEGORIES.reduce((sum, cat) => sum + (cat.budget ?? 0), 0);
   console.log(`Total monthly budget: IDR ${totalBudget.toLocaleString("id-ID")}`);
 }
 
